@@ -36,6 +36,7 @@ import pdo.client.commands.context as pcontext_cmd
 import pdo.client.commands.contract as pcontract_cmd
 import pdo.client.commands.collection as pcollection_cmd
 
+import pdo.contracts.common as common
 import pdo.contracts.groups as groups
 import pdo.contracts.keys as keys
 import pdo.contracts.services as services
@@ -228,6 +229,7 @@ def export_contract_collection(
     contract_cache = bindings.get('save', os.path.join(data_directory, '__contract_cache__'))
     export_file = '{}.zip'.format(identifier)
 
+    paths += common._base_context_.keys()
     pcollection_cmd.export_contract_collection(context, paths, contract_cache, export_file)
     return export_file
 
@@ -235,7 +237,7 @@ def export_contract_collection(
 # -----------------------------------------------------------------
 def create_download_link(filename : str, label : str = 'Download File') :
     """Create HTML display that will download a file"""
-    content = '<a href={} download>{}</a>'.format(filename, label)
+    content = '<a href="{}" download>{}</a>'.format(filename, label)
     return ip_display.HTML(content)
 
 # -----------------------------------------------------------------

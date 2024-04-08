@@ -38,7 +38,7 @@ token_class = 'mytoken'
 token_name = 'token_1'
 token_path = 'token.${token_class}.token_object.${token_name}'
 context_file = '${etc}/${token_class}_context.toml'
-service_host = 'localhost'
+service_group = 'default'
 instance_identifier = ''
 
 # %% [markdown]
@@ -63,8 +63,6 @@ pc_jupyter.load_ipython_extension(get_ipython())
 # For the most part, no modifications should be required below.
 # %%
 common_bindings = {
-    'host' : service_host,
-    'service_host' : service_host,
     'token_owner' : token_owner,
     'token_class' : token_class,
     'token_name' : token_name,

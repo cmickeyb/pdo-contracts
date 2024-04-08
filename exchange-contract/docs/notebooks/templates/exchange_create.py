@@ -44,7 +44,7 @@ request_context_file = '${etc}/context/request_issuer.toml'
 request_count = 1
 exchange_context_file = '${etc}/context/exchange_${instance}.toml'
 instance_identifier = ''
-service_host = 'localhost'
+service_group = 'default'
 
 # %% [markdown]
 # <hr style="border:2px solid gray">
@@ -73,8 +73,6 @@ pc_jupyter.load_ipython_extension(get_ipython())
 
 # %%
 common_bindings = {
-    'host' : service_host,
-    'service_host' : service_host,
     'instance' : instance_identifier,
 }
 
@@ -126,15 +124,16 @@ pc_jupyter.pcontext.Context.LoadContextFile(
 # %%
 context_bindings = {
     'identity' : identity,
-    'order.identity' : identity,
+    'service_group' : service_group,
     'order.offer.count' : offer_count,
     'order.request.count' : request_count,
-    'request.asset_type.identity' : identity,
-    'request.vetting.identity' : identity,
-    'request.issuer.identity' : identity,
-    'offer.asset_type.identity' : identity,
-    'offer.vetting.identity' : identity,
-    'offer.issuer.identity' : identity
+    # 'order.identity' : identity,
+    # 'request.asset_type.identity' : identity,
+    # 'request.vetting.identity' : identity,
+    # 'request.issuer.identity' : identity,
+    # 'offer.asset_type.identity' : identity,
+    # 'offer.vetting.identity' : identity,
+    # 'offer.issuer.identity' : identity
 }
 
 context = pc_jupyter.ex_jupyter.initialize_order_context(

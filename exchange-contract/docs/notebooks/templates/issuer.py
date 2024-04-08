@@ -44,10 +44,8 @@ identity = 'user'
 asset_name = 'asset'
 asset_description = 'this is an asset'
 asset_link = 'http://'
-context_file = '${etc}/context/${asset_name}_${instance}.toml'
 instance_identifier = ''
-service_host = 'localhost'
-
+service_group = 'default'
 # %% [markdown]
 # <hr style="border:2px solid gray">
 #
@@ -70,8 +68,6 @@ pc_jupyter.load_ipython_extension(get_ipython())
 # For the most part, no modifications should be required below.
 # %%
 common_bindings = {
-    'host' : service_host,
-    'service_host' : service_host,
     'asset_name' : asset_name,
     'instance' : instance_identifier,
 }
@@ -91,16 +87,15 @@ print('environment initialized')
 
 # %%
 asset_path = 'asset.' + asset_name
-context_file = bindings.expand(context_file)
+context_file = bindings.expand('${etc}/context/${asset_name}_${instance}.toml')
 print("using context file {}".format(context_file))
 
 context_bindings = {
-    'asset_type.identity' : identity,
+    'identity' : identity,
+    'service_group' : service_group,
     'asset_type.name' : asset_name,
     'asset_type.description' : asset_description,
     'asset_type.link' : asset_link,
-    'vetting.identity' : identity,
-    'issuer.identity' : identity,
 }
 context = pc_jupyter.ex_jupyter.initialize_asset_context(
     state, bindings, context_file, asset_path, **context_bindings)
