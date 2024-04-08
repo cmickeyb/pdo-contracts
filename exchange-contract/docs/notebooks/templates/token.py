@@ -38,7 +38,7 @@ token_class = 'mytoken'
 token_name = 'token_1'
 token_path = 'token.${token_class}.token_object.${token_name}'
 context_file = '${etc}/${token_class}_context.toml'
-service_host = 'localhost'
+service_group = 'default'
 instance_identifier = ''
 
 # %% [markdown]
@@ -63,8 +63,6 @@ pc_jupyter.load_ipython_extension(get_ipython())
 # For the most part, no modifications should be required below.
 # %%
 common_bindings = {
-    'host' : service_host,
-    'service_host' : service_host,
     'token_owner' : token_owner,
     'token_class' : token_class,
     'token_name' : token_name,
@@ -85,13 +83,18 @@ token_class_path = 'token.' + token_class
 context_file = bindings.expand(context_file)
 print("using context file {}".format(context_file))
 
-context = pc_jupyter.ex_jupyter.initialize_token_context(state, bindings, context_file, token_class_path)
+context_bindings = {
+    'identity' : token_owner,
+}
+
+context = pc_jupyter.ex_jupyter.initialize_token_context(
+    state, bindings, context_file, token_class_path, **context_bindings)
 print('context initialized')
 
 # %% [markdown]
 # <hr style="border:2px solid gray">
 #
-# ## Operate on the Contract
+# ## Operate on the Token Contract
 
 # %%
 token_context = pc_jupyter.pbuilder.Context(state, token_path)
@@ -100,10 +103,19 @@ token_context = pc_jupyter.pbuilder.Context(state, token_path)
 # ### Invoke Echo Operation
 
 # %%
-# %%skip True
-message = 'hello from token {}'.format(token_path)
-echo_result = pc_jupyter.pcommand.invoke_contract_cmd(
-    pc_jupyter.ex_token_object.cmd_echo, state, token_context, message=message)
+def token_echo(message) :
+    return pc_jupyter.pcommand.invoke_contract_cmd(
+        pc_jupyter.ex_token_object.cmd_echo, state, token_context, message=message)
+
+# token_echo('hello from token {}'.format(token_path))
+# %% [markdown]
+# ### Transfer Ownership
+def token_transfer(new_owner) :
+    return pc_jupyter.pcommand.invoke_contract_cmd(
+        pc_jupyter.ex_issuer.cmd_transfer_assets, state, token_context, new_owner=new_owner)
+
+# token_transfer('user2')
+# %%
 
 # %% [markdown]
 # <hr style="border:2px solid gray">

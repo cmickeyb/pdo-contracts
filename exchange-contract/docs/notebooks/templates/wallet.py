@@ -61,8 +61,6 @@ pc_jupyter.load_ipython_extension(get_ipython())
 
 # %%
 common_bindings = {
-    'asset_name' : asset_name,
-    'notebook' : notebook_directory,
 }
 
 (state, bindings) = pc_jupyter.initialize_environment(identity, **common_bindings)

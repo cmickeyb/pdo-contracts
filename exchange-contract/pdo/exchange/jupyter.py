@@ -25,35 +25,35 @@ _logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------
 _asset_type_context_ = {
     'module' : 'pdo.exchange.plugins.asset_type',
-    'identity' : None,
+    'identity' : '${..identity}',
     'source' : '${ContractFamily.Exchange.asset_type.source}',
     'name' : 'asset_type',
     'description' : 'asset type',
     'link' : 'http://',
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _vetting_context_ = {
     'module' : 'pdo.exchange.plugins.vetting',
-    'identity' : None,
+    'identity' : '${..identity}',
     'source' : '${ContractFamily.Exchange.vetting.source}',
     'asset_type_context' : '@{..asset_type}',
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _issuer_context_ = {
     'module' : 'pdo.exchange.plugins.issuer',
-    'identity' : None,
+    'identity' : '${..identity}',
     'source' : '${ContractFamily.Exchange.issuer.source}',
     'asset_type_context' : '@{..asset_type}',
     'vetting_context' : '@{..vetting}',
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _guardian_context_ = {
@@ -61,14 +61,14 @@ _guardian_context_ = {
     'identity' : '${..token_issuer.identity}',
     'source' : '${ContractFamily.Exchange.data_guardian.source}',
     'token_issuer_context' : '@{..token_issuer}',
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _token_issuer_context_ = {
     'module' : 'pdo.exchange.plugins.token_issuer',
-    'identity' : None,
+    'identity' : '${..identity}',
     'source' : '${ContractFamily.Exchange.token_issuer.source}',
     'token_object_context' : '@{..token_object}',
     'vetting_context' : '@{..vetting}',
@@ -78,9 +78,9 @@ _token_issuer_context_ = {
         'opaque' : '',
     },
     'count' : 10,
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _token_object_context_ = {
@@ -89,14 +89,14 @@ _token_object_context_ = {
     'source' : '${ContractFamily.Exchange.token_object.source}',
     'token_issuer_context' : '@{..token_issuer}',
     'data_guardian_context' : '@{..guardian}',
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 _order_context_ = {
     'module' : 'pdo.exchange.plugins.exchange',
-    'identity' : None,
+    'identity' : '${..identity}',
     'source' : '${ContractFamily.Exchange.exchange.source}',
     'offer' : {
         'issuer_context' : '@{...offer.issuer}',
@@ -106,9 +106,9 @@ _order_context_ = {
         'issuer_context' : '@{...request.issuer}',
         'count' : 1,
     },
-    'eservice_group' : 'default',
-    'pservice_group' : 'default',
-    'sservice_group' : 'default',
+    'eservice_group' : '${..eservice_group}',
+    'pservice_group' : '${..pservice_group}',
+    'sservice_group' : '${..sservice_group}',
 }
 
 # add each of these to the global mapping
