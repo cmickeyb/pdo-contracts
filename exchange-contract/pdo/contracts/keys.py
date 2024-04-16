@@ -20,6 +20,7 @@ import ipywidgets
 
 import pdo.client.builder as pbuilder
 from pdo.common.keys import ServiceKeys
+from pdo.contracts.common_widgets import FileDownloadLink
 
 __all__ = [
     'build_public_key_map',
@@ -147,7 +148,7 @@ class KeyListWidget(ipywidgets.VBox) :
         result = self.table_header
 
         for k in keys :
-            result += "<tr><td>{}</td><td>{}</td></tr>\n".format(k, key_map[k])
+            result += "<tr><td>{}</td><td>{}</td></tr>\n".format(k, FileDownloadLink(key_map[k], key_map[k]).value)
 
         result += self.table_footer
 

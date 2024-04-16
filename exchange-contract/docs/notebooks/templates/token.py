@@ -107,16 +107,18 @@ def token_echo(message) :
     return pc_jupyter.pcommand.invoke_contract_cmd(
         pc_jupyter.ex_token_object.cmd_echo, state, token_context, message=message)
 
-# token_echo('hello from token {}'.format(token_path))
+# %%
+# %%skip True
+token_echo('hello from token {}'.format(token_path))
 # %% [markdown]
 # ### Transfer Ownership
+# %%
 def token_transfer(new_owner) :
     return pc_jupyter.pcommand.invoke_contract_cmd(
         pc_jupyter.ex_issuer.cmd_transfer_assets, state, token_context, new_owner=new_owner)
-
-# token_transfer('user2')
 # %%
-
+# %%skip True
+token_transfer('user2')
 # %% [markdown]
 # <hr style="border:2px solid gray">
 #
@@ -144,7 +146,7 @@ contract_files = {
 # %%
 # %%skip True
 export_file = pc_jupyter.export_contract_collection(state, bindings, context, contexts, contract_identifier)
-ip_display.display(pc_jupyter.create_download_link(export_file, 'Download Contract Collection File'))
+ip_display.display(pc_jupyter.widgets.FileDownloadButton(export_file, 'Download Contract'))
 
 # %% [markdown]
 # <hr style="border:2px solid gray">
