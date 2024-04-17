@@ -38,7 +38,6 @@ token_class = 'mytoken'
 token_name = 'token_1'
 token_path = 'token.${token_class}.token_object.${token_name}'
 context_file = '${etc}/${token_class}_context.toml'
-service_group = 'default'
 instance_identifier = ''
 
 # %% [markdown]

@@ -139,7 +139,6 @@ parameters = {
     'token_owner' : token_owner,
     'token_class' : token_class,
     'context_file' : context_file,
-    'service_group' : service_group,
 }
 
 for token_context in minted_token_contexts :

@@ -236,6 +236,22 @@ def export_contract_collection(
     return export_file
 
 # -----------------------------------------------------------------
+# -----------------------------------------------------------------
+def import_contract_collection(
+    state : pbuilder.state.State,
+    bindings : pbuilder.bindings.Bindings,
+    context_file : str,
+    import_file : str) :
+    """Import a contract collection file
+    """
+
+    data_directory = bindings.get('data', state.get(['Contract', 'DataDirectory']))
+    contract_cache = bindings.get('save', os.path.join(data_directory, '__contract_cache__'))
+    context = pcollection_cmd.import_contract_collection(context_file, contract_cache, import_file)
+
+   return export_file
+
+# -----------------------------------------------------------------
 # Load plugins from the contract families. Each contract family
 # is listed (the python module for it) with a short, unique prefix
 # that will be prepended to each of the module names. This way all
