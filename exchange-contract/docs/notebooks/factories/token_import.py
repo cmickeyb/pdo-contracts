@@ -38,9 +38,11 @@ pc_jupyter.load_ipython_extension(get_ipython())
 
 # %%
 token_owner = input('Identity to use for interacting with the token: ')
+token_class = input('Class of tokens to import: ')
 token_name = input('Name of the token [token_1]: ') or 'token_1'
 token_import_file = input('Name of the token import file: ')
 
+context_file = '${etc}/${token_class}_context.toml'
 # %% [markdown]
 # ### Initialize the PDO Environment
 #
@@ -51,18 +53,14 @@ token_import_file = input('Name of the token import file: ')
 # For the most part, no modifications should be required below.
 # %%
 (state, bindings) = pc_jupyter.initialize_environment(token_owner)
-
-token_path = 'token.${token_class}.token_object.${token_name}'
-context_file = '${etc}/${token_class}_context.toml'
-
-token_context = pc_jupyter.import_contract_collection(state, bindings,
+_ = pc_jupyter.import_contract_collection(state, bindings, context_file, token_import_file)
 
 # %% [markdown]
 # ## Create the Token
 
 # %%
 instance_parameters = {
-    'token_owner' : identity,
+    'token_owner' : token_owner,
     'token_class' : token_class,
     'token_name' : token_name,
     'context_file' : context_file,

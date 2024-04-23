@@ -36,7 +36,6 @@
 token_owner = 'user1'
 token_class = 'mytoken'
 token_name = 'token_1'
-token_path = 'token.${token_class}.token_object.${token_name}'
 context_file = '${etc}/${token_class}_context.toml'
 instance_identifier = ''
 
@@ -78,7 +77,6 @@ print('environment initialized')
 # For the most part, no other modifications should be required.
 
 # %%
-token_class_path = 'token.' + token_class
 context_file = bindings.expand(context_file)
 print("using context file {}".format(context_file))
 
@@ -86,6 +84,7 @@ context_bindings = {
     'identity' : token_owner,
 }
 
+token_class_path = 'token.' + token_class
 context = pc_jupyter.ex_jupyter.initialize_token_context(
     state, bindings, context_file, token_class_path, **context_bindings)
 print('context initialized')
@@ -96,6 +95,7 @@ print('context initialized')
 # ## Operate on the Token Contract
 
 # %%
+token_path = 'token.${token_class}.token_object.${token_name}'
 token_context = pc_jupyter.pbuilder.Context(state, token_path)
 
 # %% [markdown]

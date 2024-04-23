@@ -62,3 +62,50 @@ class FileDownloadLink(ipywidgets.HTML) :
 class FileDownloadButton(FileDownloadLink) :
     """Create a Jupyter button for a download link"""
     _label_template_ = '<button class="p-Widget jupyter-widgets jupyter-button widget-button mod-warning">{label}</button>'
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class ImportContractWidget(ipywidgets.VBox) :
+    """Define a widget class for uploading a file
+
+    This widget consists of several components: the file, an upload
+    button, and a feedback area.
+    """
+    def __init__(self, state : pbuilder.state.State, bindings : pbuilder.bindings.Bindings) :
+        self.state = state
+        self.bindings = bindings
+
+        self.file = ipywidgets.FileUpload(accept='*', description='Select File')
+
+        self.upload_button = ipywidgets.Button(description="Upload")
+        self.upload_button.on_click(self.upload_button_click)
+
+        self.feedback = ipywidgets.Output()
+
+        hbox = ipywidgets.HBox([self.file, self.upload_button])
+        super().__init__([hbox, self.feedback])
+
+    def reset_widget(self) :
+        """Reset the values of the components in the widget
+        """
+        self.file.value = ()
+
+    def upload_button_click(self, b) :
+        """Handle the request to upload the file
+        """
+        self.feedback.clear_output()
+
+        if not self.entry.value or not self.entry.value.isalnum() :
+            with self.feedback : print("Identity must be alphanumeric")
+            return
+        if not self.file.value :
+            with self.feedback : print("No file specified")
+            return
+
+        keydir = self.bindings.expand("${keys}")
+        keyfile = "{}_{}.pem".format(self.entry.value, self.type.value)
+        filename = os.path.join(keydir, keyfile)
+        with open(filename, "wb") as fp : fp.write(self.file.value[0].content)
+        with self.feedback : print("keys uploaded to {}".format(filename))
+
+        self.reset_widget()
