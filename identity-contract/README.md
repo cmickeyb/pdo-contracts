@@ -111,8 +111,6 @@ validating the schema of the incoming credential. It may also perform a
 computation on the credential (for example, computing majority from a
 birthdate).
 
-
-
 Pre-configured with some policy.
 Provided a list of credentials.
 Issues a new credential.

@@ -75,19 +75,10 @@
         SCHEMA_KW(signature, "")                \
     "}"
 
-// At some point, we might benefit from formalizing the attributes
-// used to verify that an identity is bound to a specific object. For
-// example, a picture may be used to connect the identity object to a
-// person. Or a SHA256 hash may be used to verify that the identity
-// corresponds to a software artifact.
-
-#define IDENTITY_ADD_CREDENTIAL_PARAM_SCHEMA "{" "}"
-
-#define IDENTITY_REMOVE_CREDENTIAL_PARAM_SCHEMA "{" "}"
-
-#define IDENTITY_CREATE_PRESENTATION_PARAM_SCHEMA "{" "}"
-
-#define IDENTITY_CREATE_PRESENTATION_RESULT_SCHEMA "{" "}"
+#define IDENTITY_GET_VERIFYING_KEY_PARAM_SCHEMA \
+    "{"                                         \
+        SCHEMA_KW(context_path, [ "" ])         \
+    "}"
 
 namespace ww
 {
@@ -101,9 +92,12 @@ namespace identity
     bool describe_signing_context(const Message& msg, const Environment& env, Response& rsp);
     bool sign(const Message& msg, const Environment& env, Response& rsp);
     bool verify(const Message& msg, const Environment& env, Response& rsp);
-    bool add_credential(const Message& msg, const Environment& env, Response& rsp);
-    bool remove_credential(const Message& msg, const Environment& env, Response& rsp);
-    bool create_presentation(const Message& msg, const Environment& env, Response& rsp);
+    bool get_verifying_key(const Message& msg, const Environment& env, Response& rsp);
+
+    bool get_context_path(const Message& msg, std::vector<std::string>& context_path);
+    bool validate_context_path(std::vector<std::string>& context_path);
+    bool get_extended_key_seed(ww::types::ByteArray& extended_key_seed);
+
 }; // identity
 }; // identity
 }; // ww

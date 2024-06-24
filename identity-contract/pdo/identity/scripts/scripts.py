@@ -20,8 +20,8 @@ warnings.simplefilter("ignore")
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
-def credential_type() :
-    run_shell_command('do_credential_type', 'pdo.identity.plugins.credential_type')
+def signature_authority() :
+    run_shell_command('do_signature_authority', 'pdo.identity.plugins.signature_authority')
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------

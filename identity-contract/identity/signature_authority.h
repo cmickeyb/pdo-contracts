@@ -24,25 +24,28 @@
 
 #include "common/Credential.h"
 
-#define POLICY_AGENT_INITIALIZE_PARAM_SCHEMA         \
-    "{"                                                 \
-        SCHEMA_KWS(claims_schema, CLAIMS_SCHEMA)        \
+#define SIGNATURE_AUTHORITY_SIGN_CREDENTIAL_PARAM_SCHEMA        \
+    "{"                                                         \
+        SCHEMA_KW(context_path, [ "" ]) ","                     \
+        SCHEMA_KWS(credential, CREDENTIAL_SCHEMA)               \
     "}"
 
-#define POLICY_AGENT_VALIDATE_CREDENTIAL_PARAM_SCHEMA        \
+#define SIGNATURE_AUTHORITY_SIGN_CREDENTIAL_RESULT_SCHEMA       \
+    VERIFIABLE_CREDENTIAL_SCHEMA
+
+#define SIGNATURE_AUTHORITY_VERIFY_CREDENTIAL_PARAM_SCHEMA      \
     "{"                                                         \
-        SCHEMA_KW(credential, CREDENTIAL_SCHEMA)                \
+        SCHEMA_KWS(credential, VERIFIABLE_CREDENTIAL_SCHEMA)    \
     "}"
 
 namespace ww
 {
 namespace identity
 {
-namespace policy_agent
+namespace signature_authority
 {
-    bool initialize_contract(const Environment& env);
-    bool initialize(const Message& msg, const Environment& env, Response& rsp);
-    bool validate_credential(const Message& msg, const Environment& env, Response& rsp);
-}; // policy_agent
+    bool sign_credential(const Message& msg, const Environment& env, Response& rsp);
+    bool verify_credential(const Message& msg, const Environment& env, Response& rsp);
+}; // signature_authority
 }; // identity
 }; // ww

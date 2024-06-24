@@ -44,7 +44,6 @@
 bool initialize_contract(const Environment& env, Response& rsp)
 {
     // ---------- initialize the base contract ----------
-    // ---------- initialize the base contract ----------
     ASSERT_SUCCESS(rsp, ww::identity::identity::initialize_contract(env),
                    "unexpected error: failed to initialize the contract");
 
@@ -55,16 +54,12 @@ bool initialize_contract(const Environment& env, Response& rsp)
 // -----------------------------------------------------------------
 contract_method_reference_t contract_method_dispatch_table[] = {
     CONTRACT_METHOD2(initialize, ww::identity::identity::initialize),
-    CONTRACT_METHOD2(get_verifying_key, ww::contract::base::get_verifying_key),
+
+    CONTRACT_METHOD2(get_verifying_key, ww::identity::identity::get_verifying_key),
     CONTRACT_METHOD2(register_signing_context, ww::identity::identity::register_signing_context),
     CONTRACT_METHOD2(describe_signing_context, ww::identity::identity::describe_signing_context),
     CONTRACT_METHOD2(sign, ww::identity::identity::sign),
     CONTRACT_METHOD2(verify, ww::identity::identity::verify),
-
-    CONTRACT_METHOD2(add_credential, ww::identity::identity::add_credential),
-    CONTRACT_METHOD2(remove_credential, ww::identity::identity::remove_credential),
-    CONTRACT_METHOD2(create_presentation, ww::identity::identity::create_presentation),
-    // add holder binding (how do i know this identity corresponds to this person)
 
     { NULL, NULL }
 };

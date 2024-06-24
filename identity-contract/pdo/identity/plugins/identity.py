@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import logging
 
 from pdo.contract import invocation_request
@@ -23,20 +22,16 @@ import pdo.client.builder.contract as pcontract
 import pdo.client.builder.shell as pshell
 import pdo.client.commands.contract as pcontract_cmd
 
-import pdo.client.plugins.common as common
-import pdo.exchange.plugins.asset_type as asset_type
-
 import pdo.common.crypto as pcrypto
 
 __all__ = [
     'op_initialize',
+    'op_get_verifying_key',
     'op_register_signing_context',
     'op_describe_signing_context',
     'op_sign',
     'op_verify',
-    'op_add_credential',
-    'op_remove_credential',
-    'op_create_presentation',
+    'cmd_create_identity',
     'do_identity',
     'do_identity_contract',
     'load_commands',
@@ -44,8 +39,8 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class op_initialize(pcontract.contract_op_base) :
 
     name = "initialize"
@@ -69,8 +64,37 @@ class op_initialize(pcontract.contract_op_base) :
 
         return result
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class op_get_verifying_key(pcontract.contract_op_base) :
+
+    name = "get_verifying_key"
+    help = "Get the verifying key for a context"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='+',
+            required=True)
+
+    @classmethod
+    def invoke(cls, state, session_params, path, **kwargs) :
+        session_params['commit'] = True
+
+        params = {
+            'context_path' : path,
+        }
+        message = invocation_request('get_verifying_key', **params)
+        result = pcontract_cmd.send_to_contract(state, message, **session_params)
+        cls.log_invocation(message, result)
+
+        return result
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class op_register_signing_context(pcontract.contract_op_base) :
 
     name = "register_signing_context"
@@ -114,8 +138,8 @@ class op_register_signing_context(pcontract.contract_op_base) :
 
         return result
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class op_describe_signing_context(pcontract.contract_op_base) :
 
     name = "describe_signing_context"
@@ -141,8 +165,8 @@ class op_describe_signing_context(pcontract.contract_op_base) :
 
         return result
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class op_sign(pcontract.contract_op_base) :
 
     name = "sign"
@@ -174,8 +198,8 @@ class op_sign(pcontract.contract_op_base) :
 
         return result
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class op_verify(pcontract.contract_op_base) :
 
     name = "verify"
@@ -218,102 +242,71 @@ class op_verify(pcontract.contract_op_base) :
 
         return result
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
-class op_add_credential(pcontract.contract_op_base) :
-
-    name = "add_credential"
-    help = "Store a credential in the wallet"
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class cmd_create_identity(pcommand.contract_command_base) :
+    name = "create"
+    help = "script to create an identity"
 
     @classmethod
     def add_arguments(cls, subparser) :
+        subparser.add_argument('-c', '--contract-class', help='Name of the contract class', type=str)
+        subparser.add_argument('-e', '--eservice-group', help='Name of the enclave service group to use', type=str)
+        subparser.add_argument('-f', '--save-file', help='File where contract data is stored', type=str)
+        subparser.add_argument('-p', '--pservice-group', help='Name of the provisioning service group to use', type=str)
+        subparser.add_argument('-r', '--sservice-group', help='Name of the storage service group to use', type=str)
+        subparser.add_argument('--source', help='File that contains contract source code', type=str)
+        subparser.add_argument('--extra', help='Extra data associated with the contract file', nargs=2, action='append')
+
         subparser.add_argument(
-            '-c', '--credential',
-            help='Base64 encoded credential',
+            '-d', '--description',
+            help='Description of the asset described by the identity',
             type=str,
             required=True)
-        subparser.add_argument(
-            '-i', '--identifier',
-            help='Identifier for the credential for future operations',
-            type=str,
-            required=True)
 
     @classmethod
-    def invoke(cls, state, session_params, **kwargs) :
-        session_params['commit'] = True
+    def invoke(cls, state, context, description, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+        if save_file :
+            return save_file
 
-        message = invocation_request('add_credential')
-        result = pcontract_cmd.send_to_contract(state, message, **session_params)
-        cls.log_invocation(message, result)
+        # create the vetting organization type
+        save_file = pcontract_cmd.create_contract_from_context(state, context, 'identity', **kwargs)
+        context['save_file'] = save_file
 
-        return result
+        session = pbuilder.SessionParameters(save_file=save_file)
+        pcontract.invoke_contract_op(
+            op_initialize,
+            state, context, session,
+            description,
+            **kwargs)
 
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
-class op_remove_credential(pcontract.contract_op_base) :
+        cls.display('created identity in {}'.format(save_file))
+        return save_file
 
-    name = "remove_credential"
-    help = "Remove a credential from the wallet"
-
-    @classmethod
-    def add_arguments(cls, subparser) :
-        pass
-
-    @classmethod
-    def invoke(cls, state, session_params, **kwargs) :
-        session_params['commit'] = True
-
-        message = invocation_request('remove_credential')
-        result = pcontract_cmd.send_to_contract(state, message, **session_params)
-        cls.log_invocation(message, result)
-
-        return result
-
-## -----------------------------------------------------------------
-## -----------------------------------------------------------------
-class op_create_presentation(pcontract.contract_op_base) :
-
-    name = "create_presentation"
-    help = "Prepare a credential presentation"
-
-    @classmethod
-    def add_arguments(cls, subparser) :
-        pass
-
-    @classmethod
-    def invoke(cls, state, session_params, **kwargs) :
-        session_params['commit'] = True
-
-        message = invocation_request('create_presentation')
-        result = pcontract_cmd.send_to_contract(state, message, **session_params)
-        cls.log_invocation(message, result)
-
-        return result
-
-## -----------------------------------------------------------------
-## Create the generic, shell independent version of the aggregate command
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# Create the generic, shell independent version of the aggregate command
+# -----------------------------------------------------------------
 __operations__ = [
     op_initialize,
+    op_get_verifying_key,
     op_register_signing_context,
     op_describe_signing_context,
     op_sign,
     op_verify,
-    op_add_credential,
-    op_remove_credential,
-    op_create_presentation,
 ]
 
 do_identity_contract = pcontract.create_shell_command('identity_contract', __operations__)
 
 __commands__ = [
+    cmd_create_identity,
 ]
 
 do_identity = pcommand.create_shell_command('identity', __commands__)
 
-## -----------------------------------------------------------------
-## Enable binding of the shell independent version to a pdo-shell command
-## -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# Enable binding of the shell independent version to a pdo-shell command
+# -----------------------------------------------------------------
 def load_commands(cmdclass) :
     pshell.bind_shell_command(cmdclass, 'identity_wallet', do_identity)
     pshell.bind_shell_command(cmdclass, 'identity_wallet_contract', do_identity_contract)

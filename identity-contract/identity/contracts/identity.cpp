@@ -35,7 +35,6 @@
 #include "identity/common/SigningContextManager.h"
 
 static KeyValueStore identity_metadata_store("key_store");
-static KeyValueStore credential_store("credential_store");
 static KeyValueStore signing_context_store("signing_context");
 
 static const std::string md_extended_key_seed("extend_key_seed");
@@ -47,7 +46,7 @@ static const std::string md_description("description");
 // RETURNS:
 //   true if path successfully created
 // -----------------------------------------------------------------
-static bool get_context_path(const Message& msg, std::vector<std::string>& context_path)
+bool ww::identity::identity::get_context_path(const Message& msg, std::vector<std::string>& context_path)
 {
     ww::value::Array context_path_array;
     if (! msg.get_value("context_path", context_path_array))
@@ -65,6 +64,29 @@ static bool get_context_path(const Message& msg, std::vector<std::string>& conte
     }
 
     return true;
+}
+
+// -----------------------------------------------------------------
+// FUNCTION: validate_context_path
+// -----------------------------------------------------------------
+bool ww::identity::identity::validate_context_path(std::vector<std::string>& context_path)
+{
+    // Attempt to find the context, this will tell us whether
+    // the path is valid... that is, it meets the extensibility
+    // criteria for all registered contexts
+    ww::identity::SigningContextManager manager(signing_context_store);
+    ww::identity::SigningContext context;
+    std::vector<std::string> extended_path;
+
+    return manager.find_context(context_path, extended_path, context);
+}
+
+// -----------------------------------------------------------------
+// FUNCTION: get_extended_key_seed
+// -----------------------------------------------------------------
+bool ww::identity::identity::get_extended_key_seed(ww::types::ByteArray& extended_key_seed)
+{
+    return identity_metadata_store.get(md_extended_key_seed, extended_key_seed);
 }
 
 // -----------------------------------------------------------------
@@ -228,21 +250,11 @@ bool ww::identity::identity::sign(const Message& msg, const Environment& env, Re
     std::vector<std::string> context_path;
     ASSERT_SUCCESS(rsp, get_context_path(msg, context_path),
                    "invalid request, ill-formed context path");
+    ASSERT_SUCCESS(rsp, validate_context_path(context_path),
+                   "invalid request, ill-formed context path");
 
-    // Attempt to find the context, this will tell us whether
-    // the path is valid... that is, it meets the extensibility
-    // criteria for all registered contexts
-    ww::identity::SigningContextManager manager(signing_context_store);
-    ww::identity::SigningContext context;
-    std::vector<std::string> extended_path;
-
-    ASSERT_SUCCESS(rsp, manager.find_context(context_path, extended_path, context),
-                   "invalid request, invalid context");
-
-    // Now we have a valid context path, get the rest of the
-    // information needed to build the extended key
     ww::types::ByteArray extended_key_seed;
-    ASSERT_SUCCESS(rsp, identity_metadata_store.get(md_extended_key_seed, extended_key_seed),
+    ASSERT_SUCCESS(rsp, get_extended_key_seed(extended_key_seed),
                    "unexpected error, failed to retrieve extended key seed");
 
     const std::string b64_message(msg.get_string("message"));
@@ -282,21 +294,11 @@ bool ww::identity::identity::verify(const Message& msg, const Environment& env, 
     std::vector<std::string> context_path;
     ASSERT_SUCCESS(rsp, get_context_path(msg, context_path),
                    "invalid request, ill-formed context path");
+    ASSERT_SUCCESS(rsp, validate_context_path(context_path),
+                   "invalid request, ill-formed context path");
 
-    // Attempt to find the context, this will tell us whether
-    // the path is valid... that is, it meets the extensibility
-    // criteria for all registered contexts
-    ww::identity::SigningContextManager manager(signing_context_store);
-    ww::identity::SigningContext context;
-    std::vector<std::string> extended_path;
-
-    ASSERT_SUCCESS(rsp, manager.find_context(context_path, extended_path, context),
-                   "invalid request, invalid context");
-
-    // Now we have a valid context path, get the rest of the
-    // information needed to build the extended key
     ww::types::ByteArray extended_key_seed;
-    ASSERT_SUCCESS(rsp, identity_metadata_store.get(md_extended_key_seed, extended_key_seed),
+    ASSERT_SUCCESS(rsp, get_extended_key_seed(extended_key_seed),
                    "unexpected error, failed to retrieve extended key seed");
 
     const std::string b64_message(msg.get_string("message"));
@@ -319,63 +321,42 @@ bool ww::identity::identity::verify(const Message& msg, const Environment& env, 
 
 // -----------------------------------------------------------------
 // METHOD:
-//   add_credential
+//   get_verifying_key
+//
+//   Note that this method will override the get_verifying_key method
+//   from the common library. That method returned the verifying key
+//   for the contract. This is a more semantically rich variant. The
+//   contract verifying key should still be available from the ledger.
 //
 // JSON PARAMETERS:
-//   IDENTITY_ADD_CREDENTIAL_PARAM_SCHEMA
+//   IDENTITY_GET_VERIFYING_KEY_PARAM_SCHEMA
 // RETURNS:
-//   boolean
+//   PEM encoded public key
 // -----------------------------------------------------------------
-bool ww::identity::identity::add_credential(const Message& msg, const Environment& env, Response& rsp)
+bool ww::identity::identity::get_verifying_key(const Message& msg, const Environment& env, Response& rsp)
 {
-    ASSERT_SENDER_IS_OWNER(env, rsp);
     ASSERT_INITIALIZED(rsp);
 
-    ASSERT_SUCCESS(rsp, msg.validate_schema(IDENTITY_ADD_CREDENTIAL_PARAM_SCHEMA),
+    ASSERT_SUCCESS(rsp, msg.validate_schema(IDENTITY_GET_VERIFYING_KEY_PARAM_SCHEMA),
                    "invalid request, missing required parameters");
 
-    // ---------- RETURN ----------
-    return rsp.success(true);
-}
+    // Get the context path parameter
+    std::vector<std::string> context_path;
+    ASSERT_SUCCESS(rsp, get_context_path(msg, context_path),
+                   "invalid request, ill-formed context path");
+    ASSERT_SUCCESS(rsp, validate_context_path(context_path),
+                   "invalid request, ill-formed context path");
 
-// -----------------------------------------------------------------
-// METHOD:
-//   remove_credential
-//
-// JSON PARAMETERS:
-//   IDENTITY_REMOVE_CREDENTIAL_PARAM_SCHEMA
-// RETURNS:
-//   boolean
-// -----------------------------------------------------------------
-bool ww::identity::identity::remove_credential(const Message& msg, const Environment& env, Response& rsp)
-{
-    ASSERT_SENDER_IS_OWNER(env, rsp);
-    ASSERT_INITIALIZED(rsp);
+    // Get the keys associated with the context path
+    ww::types::ByteArray root_key;
+    ASSERT_SUCCESS(rsp, get_extended_key_seed(root_key),
+                   "unexpected error, failed to retrieve extended key seed");
 
-    ASSERT_SUCCESS(rsp, msg.validate_schema(IDENTITY_REMOVE_CREDENTIAL_PARAM_SCHEMA),
-                   "invalid request, missing required parameters");
+    std::string private_key, public_key;
+    ASSERT_SUCCESS(rsp, ww::identity::SigningContext::generate_keys(root_key, context_path, private_key, public_key),
+                   "unexpected error, failed to generate public key");
 
     // ---------- RETURN ----------
-    return rsp.success(true);
-}
-
-// -----------------------------------------------------------------
-// METHOD:
-//   create_presentation
-//
-// JSON PARAMETERS:
-//   IDENTITY_CREATE_PRESENTATION_PARAM_SCHEMA
-// RETURNS:
-//   IDENTITY_CREATE_PRESENTATION_RESULT_SCHEMA
-// -----------------------------------------------------------------
-bool ww::identity::identity::create_presentation(const Message& msg, const Environment& env, Response& rsp)
-{
-    ASSERT_SENDER_IS_OWNER(env, rsp);
-    ASSERT_INITIALIZED(rsp);
-
-    ASSERT_SUCCESS(rsp, msg.validate_schema(IDENTITY_CREATE_PRESENTATION_PARAM_SCHEMA),
-                   "invalid request, missing required parameters");
-
-    // ---------- RETURN ----------
-    return rsp.success(true);
+    ww::value::String result(public_key.c_str());
+    return rsp.value(result, false);
 }

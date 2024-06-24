@@ -36,7 +36,7 @@
 // Optional fields include:
 //    name -- a human readable name of the object, need not be unique or meaningful
 //    description -- a human readable description of the object
-//    identified_by -- a JSON object with information that can be used to
+//    identified_by -- a JSON object with properties to identify holder, definition TBD
 #define IDENTITY_SCHEMA                         \
     "{"                                         \
         SCHEMA_KW(id, "")                       \
@@ -51,6 +51,8 @@ namespace identity
     private:
     public:
         std::string id_;
+        std::string name_;
+        std::string description_;
 
         static bool verify_schema(const ww::value::Object& deserialized_object)
         {
@@ -78,7 +80,7 @@ namespace identity
 #define IDENTITY_KEY_SCHEMA                     \
     "{"                                         \
         SCHEMA_KW(id, "") ","                   \
-        SCHEMA_KW(context_path, "[" "\"\"" "]") \
+        SCHEMA_KW(context_path, [ "" ])         \
     "}"
 
 namespace ww
@@ -91,6 +93,8 @@ namespace identity
     public:
         std::string id_;
         std::vector<std::string> context_path_;
+        std::string name_;
+        std::string description_;
 
         static bool verify_schema(const ww::value::Object& deserialized_object)
         {
@@ -100,6 +104,10 @@ namespace identity
 
         bool deserialize(const ww::value::Object& credential);
         bool serialize(ww::value::Value& serialized_credential) const;
+
+        IdentityKey(void) { }
+        IdentityKey(const std::string id, const std::vector<std::string>& context_path) :
+            id_(id), context_path_(context_path) { }
     };
 }
 }
@@ -113,10 +121,10 @@ namespace identity
 //    claims -- an object whose properties are attributes of the subject;
 //        specific details of claims about the subject will be provided
 //        at contract configuration time
-#define CLAIMS_SCHEMA                           \
-    "{"                                         \
-        SCHEMA_KW(subject, IDENTITY_SCHEMA) "," \
-        SCHEMA_KW(claims, {}) ","               \
+#define CLAIMS_SCHEMA                                   \
+    "{"                                                 \
+        SCHEMA_KWS(subject, IDENTITY_SCHEMA) ","        \
+        SCHEMA_KW(claims, {})                           \
     "}"
 
 namespace ww
@@ -154,7 +162,7 @@ namespace identity
 //    proofValue -- base64 encoded signature
 // Optional fields include:
 //    proofPurpose -- keyword that identifies what the proof claims
-//    created -- time when the proof was created
+//    created -- time when the proof was createdxc
 #define PROOF_SCHEMA                                            \
     "{"                                                         \
         SCHEMA_KW(type, "") ","                                 \
@@ -173,6 +181,8 @@ namespace identity
         std::string type_;
         ww::identity::IdentityKey verificationMethod_;
         std::string proofValue_;
+        std::string proofPurpose_;
+        std::string created_;
 
         static bool verify_schema(const ww::value::Object& deserialized_object)
         {
@@ -220,6 +230,12 @@ namespace identity
         ww::identity::Identity issuer_;
         ww::identity::Claims credentialSubject_;
 
+        std::string name_;
+        std::string description_;
+        std::string nonce_;
+        std::string issuanceDate_;
+        std::string expirationDate_;
+
         static bool verify_schema(const ww::value::Object& deserialized_object)
         {
             return ww::exchange::SerializeableObject::verify_schema_actual(
@@ -236,8 +252,8 @@ namespace identity
 //
 // To avoid the need for common JSON serialization schemes necessary for
 // verifiable signatures, we are just passing a base64 encoding of the
-// serialized credential that will be signed. This ensures that serialization
-// will not be an issue.
+// serialized credential that will be signed. This ensures that inconsistent
+// serialization will not be an issue.
 #define VERIFIABLE_CREDENTIAL_SCHEMA            \
     "{"                                         \
         SCHEMA_KW(serializedCredential, "") "," \
@@ -251,8 +267,10 @@ namespace identity
     class VerifiableCredential : public ww::exchange::SerializeableObject
     {
     private:
+        std::string serializedCredential_; // Base64 encoding of serialized credential
+
     public:
-        std::string serializedCredential_;
+        ww::identity::Credential credential_;
         ww::identity::Proof proof_;
 
         static bool verify_schema(const ww::value::Object& deserialized_object)
@@ -263,6 +281,13 @@ namespace identity
 
         bool deserialize(const ww::value::Object& verifiable_credential);
         bool serialize(ww::value::Value& serialized_verifiable_credential) const;
+
+        bool build(
+            const ww::value::Object& credential,
+            const ww::identity::IdentityKey& identity,
+            const ww::types::ByteArray& extended_key_seed);
+        bool check(
+            const ww::types::ByteArray& extended_key_seed) const;
     };
 }
 }
@@ -315,8 +340,9 @@ namespace identity
     class VerifiablePresentation : public ww::exchange::SerializeableObject
     {
     private:
-    public:
         std::string serializedPresentation_;
+    public:
+        ww::identity::Presentation presentation_;
         ww::identity::Proof proof_;
 
         static bool verify_schema(const ww::value::Object& deserialized_object)
