@@ -1,10 +1,10 @@
 {
-    "//": "this is a verifiable credential",
+    "//": "this is a credential",
     "nonce": "p86OvShgiWuODUdABK6Ong==",
     "issuer": {
         "description": "The build manager is the issuer, the id is for the build manager org",
-        "id": "PDO://ledgerco.org:8001/A6QBclbcAayAvw7BggM7iMz_Xa6NEn_YGT94mpkQmEk=",
-    }
+        "id": "PDO://ledgerco.org:8001/A6QBclbcAayAvw7BggM7iMz_Xa6NEn_YGT94mpkQmEk="
+    },
     "issuanceDate": "04/17/2023",
     "expirationData": "12/31/2024",
     "type": [ "VerifiableCredential" ],
@@ -21,15 +21,15 @@
             "HasStackProtection": {
                 "conditions": {
                     "flags": "-fstack-protector*"
-                },
+                }
             },
             "NoKnownVulnerabilities": {
                 "evidence": {
-                    "mediaType":"text/plain"
+                    "mediaType":"text/plain",
                     "digest": {
                         "sha256":"6db3ee1d8bdf7ea064281ecfaf999f9eb5749e4647d2a59e62eaa1ea8fcf6837"
                     },
-                    "downloadLocation":"https://scans.example.com/results/snyk",
+                    "downloadLocation":"https://scans.example.com/results/snyk"
                 }
             },
             "HasSBOM": {
