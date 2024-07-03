@@ -11,15 +11,18 @@ https://creativecommons.org/licenses/by/4.0/
 
 A softball tournament director will allow a team to play in a
 tournament only if the team exclusively rosters coaches that meet
-minimum certification and insurance requirements, and players that are
-of an appropriate age and also meet minimum insurance
-requirements. This task is complicated by the large number of
-organizations that provide certification, insurance and age
-verification. For example, local associations, at the city or county
-level, often oversee coach certification and age
-verification. Further, there are multiple companies that provide
-certification, insurance and age verification. As a result, the
-director for a national tournament must handle information from
+minimum certification (e.g. education and safety) and insurance
+requirements, and players that are of an appropriate age and also meet
+minimum insurance requirements. This task is complicated by the large
+number of organizations that provide certification, insurance and age
+verification. Nationally, organizations like USA Softball, Premier
+Girls Fastpitch, Little League, and Alliance Fastpitch provide a
+common set of rules for local affiliates or regional leagues. The
+local affiliates, generally at the city or county level, often oversee
+coach certification and age verification.
+
+As a result, a tournament director who wants to offer participation to
+the broadest possible set of teams must handle information from
 potentially hundreds of different sources. Verifiying each roster
 requires significant time and is often error prone. Further, the
 tournament director gets access to private information that is,
@@ -32,12 +35,13 @@ about access to birthday, address, and parent names for children.
 Create a policy agent that will issue a verifiable credential for a
 softball roster that meets certain requirements. The policy agent will
 accept as authentic, verifiable credentials from specific
-issuers. Trust in these issuers is handled offline. Note: A practical
-system would likely be hierarchical with each each national
-organization providing verification of its own local associations; in
-this case the policy agent would establish trust relationships with
-the national organizations and then, indirectly, with each of the
-local assocations.
+issuers. Trust in these issuers is handled offline.
+
+Note: A practical system would likely be hierarchical with each each
+national organization providing verification of its own local
+associations; in this case the policy agent would establish trust
+relationships with the national organizations and then, indirectly,
+with each of the local assocations.
 
 The policy agent will determine that the roster meets the minimum
 criteria and will create a verifiable credential for the
@@ -56,15 +60,17 @@ director.
 
 ## Demonstration ##
 
-* Create identity objects for 10 players, 2 coaches and a team
-  manager. These identity objects serve exclusively as unique
-  identifiers for the players and coaches.
+* For each player and coach:
+  * Create a key pair for the person
+  * Create a digital asset with the person's picture
+  * Create an identity for the person with a description (fields for
+    name, address, and birthday) and identified-by (contract
+    identifier for the digital asset that manages their picture)
 
-* Create a signing/issuing authority for an association called
-  "local". The issuing authority will create verifiable credentials
-  for each of the players and coaches. These credentials will include
-  information about birthday, address, insurance coverage, and
-  certification.
+* Create a signing/issuing authority for the local association.  The
+  issuing authority will create verifiable credentials for each of the
+  players and coaches. These credentials will include information
+  about birthday, address, insurance coverage, and certifications.
 
 * Create a policy agent for an association called "national". The
   policy agent will be configured with a trust relationship with the
