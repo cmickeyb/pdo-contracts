@@ -1,0 +1,236 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "PDO Team Registration",
+    "id": "http://tradenet.org/pdo-contracts/identity/roster",
+
+    "definitions": {
+        "insurance": {
+             "//": "-----------------------------------------------------------------",
+            "description": [
+                "Base type for insurance coverage, includes the absolute minimum",
+                "information for the demonstration"
+            ],
+            "type": "object",
+            "properties": {
+                "provider": {
+                    "description": [
+                        "Identity object for the insurance provider, assumed to be a contract id"
+                    ],
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
+                    "required": false
+                },
+                "validFrom": {
+                    "description": [
+                        "This is the time when the credential begins to be valid"
+                    ],
+                    "type": "datetime",
+                    "required": false
+                },
+                "expirationDate": {
+                    "type": "datetime",
+                    "required": false
+                },
+                "maximumLiability": {
+                    "type": "integer",
+                    "required": true
+                }
+            }
+        },
+
+        "eligibleParticipant": {
+             "//": "-----------------------------------------------------------------",
+            "description": [
+                "Information for eligible players and coaches to be included in the roster"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": [
+                        "Identity object for the player or coach, assumed to be a contract id"
+                    ],
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
+                    "required": true
+                },
+                "identified-by": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "required": true
+                        },
+                        "picture" : {
+                            "type": {
+                                "$ref": "#/pdo/basetypes/contract-id"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+
+        "player": {
+             "//": "-----------------------------------------------------------------",
+            "description": [
+                "Player information certified by the the local association"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": [
+                        "Identity object for the player, assumed to be a contract id"
+                    ],
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "required": true
+                },
+                "address": {
+                    "type": "string",
+                    "required": true
+                },
+                "birthday": {
+                    "type": "datetime",
+                    "required": true
+                },
+                "insurance": {
+                    "type": {
+                        "$ref": "#insurance"
+                    },
+                    "required": true
+                },
+                "identified-by": {
+                    "type": "object",
+                    "properties": {
+                        "picture" : {
+                            "type": {
+                                "$ref": "#/pdo/basetypes/contract-id"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+
+        "coach": {
+             "//": "-----------------------------------------------------------------",
+            "description": [
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": [
+                        "Identity object for the player, assumed to be a contract id"
+                    ],
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "required": true
+                },
+                "address": {
+                    "type": "string",
+                    "required": true
+                },
+                "backgroundCheck": {
+                    "type": "datetime",
+                    "required": true
+                },
+                "certifications": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minItems": 0,
+                        "uniqueItems": true,
+                        "enum": [
+                            "softball_education_1",
+                            "softball_education_2",
+                            "softball_education_3",
+                            "concussion_training"
+                        ]
+                    },
+                    "required": true
+                },
+                "insurance": {
+                    "type": {
+                        "$ref": "#insurance"
+                    },
+                    "required": true
+                },
+                "identified-by": {
+                    "type": "object",
+                    "properties": {
+                        "picture" : {
+                            "type": {
+                                "$ref": "#/pdo/basetypes/contract-id"
+                            }
+                        }
+                    },
+                    "required": true
+                }
+            }
+        },
+
+        "roster": {
+             "//": "-----------------------------------------------------------------",
+            "description": [
+                "Roster of eligible participants, issued by the national organization",
+                "based on credentials, issued by a local association, provided by the",
+                "head coach or team representative, verified by the tournament director"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": [
+                        "Identity object for the team, often the identity of the head coach",
+                        "assumed to be a contract id, used to identify the holder",
+                        "of the roster credential"
+                    ],
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
+                    "required": true
+                },
+                "classification": {
+                    "type": "string",
+                    "enum": [ "10U", "12U", "14U", "16U", "18U" ],
+                    "required": true
+                },
+                "eligibleCoaches": {
+                    "type": "array",
+                    "items": {
+                        "type": {
+                            "$ref": "#eligibleParticipant"
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                    },
+                    "required": true
+                },
+                "eligiblePlayers": {
+                    "type": "array",
+                    "items": {
+                        "type": {
+                            "$ref": "#eligibleParticipant"
+                        },
+                        "minItems": 9,
+                        "uniqueItems": true
+                    },
+                    "required": true
+                }
+            }
+        }
+    }
+}

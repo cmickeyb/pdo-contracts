@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/schema#",
     "title": "PDO Credential Interface",
-    "id": "http://tradenet.org/pdo-contracts/identity/credential#",
+    "id": "http://tradenet.org/pdo-contracts/identity/basetypes#",
 
     "definitions": {
         "identity": {
@@ -16,7 +16,9 @@
                         "Identity of the subject of the credential, since all subjects",
                         "are contracts this will be assumed to be a contract id"
                     ],
-                    "$ref": "#/pdo/basetypes/contract-id",
+                    "type": {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
                     "required": true
                 },
                 "name": {
@@ -57,7 +59,9 @@
                         "Identity of the subject of the credential, since all subjects",
                         "are contracts this will be assumed to be a contract id"
                     ],
-                    "$ref": "#/pdo/basetypes/contract-id",
+                    "type" : {
+                        "$ref": "#/pdo/basetypes/contract-id"
+                    },
                     "required": true
                 },
                 "context_path": {
@@ -69,9 +73,9 @@
                         "type" : "string",
                         "minItems": 0,
                         "uniqueItems": false
-                    }
+                    },
                     "required": true
-                }
+                },
                 "name": {
                     "description": [
                         "A human readable name for the object",
@@ -88,7 +92,6 @@
                     "required": false
                 }
             }
-        },
-
+        }
     }
 }
