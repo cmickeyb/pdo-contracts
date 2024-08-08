@@ -23,6 +23,7 @@
 #include "Environment.h"
 #include "Message.h"
 #include "Response.h"
+#include "Util.h"
 #include "Value.h"
 #include "WasmExtensions.h"
 
@@ -30,6 +31,8 @@
 
 static KeyValueStore meta_store("meta");
 static KeyValueStore value_store("values");
+
+const std::string counter_key("counter");
 
 // -----------------------------------------------------------------
 // NAME: initialize_contract
@@ -39,7 +42,7 @@ bool ww::example_contract::counter::initialize_contract(const Environment& env, 
     // create the value and save it to state
     const uint32_t value = 0;
 
-    if (! value_store.set(test_key, value))
+    if (! value_store.set(counter_key, value))
         return rsp.error("failed to create the test key");
 
     return rsp.success(true);
@@ -54,11 +57,11 @@ bool ww::example_contract::counter::inc_value(const Message& msg, const Environm
 
     // get the value and increment it
     uint32_t value;
-    if (! value_store.get(test_key, value))
+    if (! value_store.get(counter_key, value))
         return rsp.error("no such key");
 
     value += 1;
-    if (! value_store.set(test_key, value))
+    if (! value_store.set(counter_key, value))
         return rsp.error("failed to save the new value");
 
     ww::value::Number v((double)value);
@@ -74,7 +77,7 @@ bool ww::example_contract::counter::get_value(const Message& msg, const Environm
 
     // get the value
     uint32_t value;
-    if (! value_store.get(test_key, value))
+    if (! value_store.get(counter_key, value))
         return rsp.error("no such key");
 
     ww::value::Number v((double)value);

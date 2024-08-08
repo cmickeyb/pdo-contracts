@@ -32,12 +32,11 @@ import pdo.exchange.plugins.guardian as guardian_base
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'op_initialize',
-    'op_inc_counter',
+    'op_inc_value',
     'op_get_value',
     'cmd_create_counter',
-    'cmd_inc_counter',
-    'cmd_get_counter_value',
+    'cmd_inc_value',
+    'cmd_get_value',
     'do_example_counter',
     'do_example_counter_contract',
     'load_commands',
@@ -46,107 +45,38 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 ## -----------------------------------------------------------------
-## initialize
-## -----------------------------------------------------------------
-class op_initialize(pcontract.contract_op_base) :
-
-    name = "initialize"
-    help = "initialize the guardian for an image"
+class op_inc_value(pcontract.contract_op_base) :
+    name = "inc_value"
+    help = "Increment the value of the counter by 1"
 
     @classmethod
-    def add_arguments(cls, parser) :
-        ch_action = parser.add_mutually_exclusive_group(required=True)
-        ch_action.add_argument(
-            '-c', '--code-hash',
-            help="token issuer code hash",
-            type=pbuilder.invocation_parameter)
-        ch_action.add_argument(
-            '-t', '--token-issuer-code',
-            help="token issuer contract code to be used to compute code hash",
-            nargs=2, type=str)
-        parser.add_argument(
-            '-l', '--ledger-key',
-            help='ledger verifying key',
-            type=str, required=True)
-        parser.add_argument(
-            '-i', '--image',
-            help="name of the file containing the image",
-            type=str, required=True)
-        parser.add_argument(
-            '-b', '--border',
-            help="size of the hidden border for public images",
-            type=int, default=5)
-
-    @classmethod
-    def invoke(cls, state, session_params, code_hash, token_issuer_code, ledger_key, image, border, **kwargs) :
-        session_params['commit'] = True
-
-        gparams = {}
-        gparams['ledger_verifying_key'] = ledger_key
-
-        if code_hash :
-            gparams['token_issuer_code_hash'] = code_hash
-        elif token_issuer_code :
-            source_path = state.get(['Contract', 'SourceSearchPath'])
-            (contract_class, contract_source) = token_issuer_code
-            contract_code = ContractCode.create_from_file(
-                contract_class, contract_source, source_path, interpreter='wawaka')
-
-            message = contract_code.code + contract_code.name
-            code_hash = pcrypto.compute_message_hash(pcrypto.string_to_byte_array(message))
-            gparams['token_issuer_code_hash'] = pcrypto.byte_array_to_base64(code_hash)
-        else :
-            raise ValueError("missing required parameter; must specify verifying key")
-
-        # prepare a local KV store that we can use to pass the image
-        with open(image, 'rb') as fp:
-            image_data = fp.read()
-
-        transfer_key = '_transfer_'
-
-        kv = KeyValueStore()
-        with kv :
-            encoded_key = KeyValueStore.input_encoding_conversion['str'](transfer_key)
-            encoded_image_data = tuple(image_data)
-            kv.set(encoded_key, encoded_image_data, input_encoding='raw', output_encoding='raw')
-
-        # push the blocks to the eservice so the server can open the store
-        eservice_client = get_eservice_from_contract(state, session_params.save_file, session_params.eservice_url)
-        if not eservice_client :
-            raise Exception('unknown eservice {}'.format(session_params.eservice_url))
-
-        _ = kv.sync_to_block_store(eservice_client)
-
-        params = {}
-        params['guardian'] = gparams
-        params['public_border_width'] = border
-        params['encryption_key'] = kv.encryption_key
-        params['state_hash'] = kv.hash_identity
-        params['transfer_key'] = transfer_key
-
-        message = invocation_request('initialize', **params)
+    def invoke(cls, state, session_params, **kwargs) :
+        message = invocation_request('inc_value')
         result = pcontract_cmd.send_to_contract(state, message, **session_params)
-        cls.log_invocation(message, result)
+        return result
 
+## -----------------------------------------------------------------
+class op_get_value(pcontract.contract_op_base) :
+    name = "get_value"
+    help = "Get the current value of the counter"
+
+    @classmethod
+    def invoke(cls, state, session_params, **kwargs) :
+        message = invocation_request('get_value')
+        result = pcontract_cmd.send_to_contract(state, message, **session_params)
         return result
 
 # -----------------------------------------------------------------
-# create the guardian
+# create a counter
 # -----------------------------------------------------------------
-class cmd_create_guardian(pcommand.contract_command_base) :
-    """Create and initialize a digital asset guardian contract object
-
-    Initialization of the digital asset contract object includes initialization
-    of the asset itself. The image
+class cmd_create_counter(pcommand.contract_command_base) :
+    """Create a counter
     """
     name = "create"
-    help = "create a guardian for a digital asset"
+    help = "create a counter"
 
     @classmethod
     def add_arguments(cls, parser) :
-        parser.add_argument('-i', '--image', help="name of the file containing the image", type=str)
-        parser.add_argument('-b', '--border', help="size of the hidden border for public images", type=int)
-
         parser.add_argument('-c', '--contract-class', help='Name of the contract class', type=str)
         parser.add_argument('-e', '--eservice-group', help='Name of the enclave service group to use', type=str)
         parser.add_argument('-f', '--save-file', help='File where contract data is stored', type=str)
@@ -156,72 +86,94 @@ class cmd_create_guardian(pcommand.contract_command_base) :
         parser.add_argument('--extra', help='Extra data associated with the contract file', nargs=2, action='append')
 
     @classmethod
-    def invoke(cls, state, context, image=None, border=None, **kwargs) :
+    def invoke(cls, state, context, **kwargs) :
         if pcontract_cmd.get_contract_from_context(state, context) :
             return
-
-        # parameters
-        if image is None :
-            image = context['image_file']
-        if border is None or border == 0 :
-            border = int(context['image_border']) or 10
 
         # need the ledger key as the root of trust for binding to the issuer
         ledger_submitter = create_submitter(state.get(['Ledger']))
         ledger_key = ledger_submitter.get_ledger_info()
 
         # create the guardian contract
-        save_file = pcontract_cmd.create_contract_from_context(state, context, 'da_guardian', **kwargs)
+        save_file = pcontract_cmd.create_contract_from_context(state, context, 'example_counter', **kwargs)
         context['save_file'] = save_file
 
+        return save_file
+
+# -----------------------------------------------------------------
+# increment a counter
+# -----------------------------------------------------------------
+class cmd_inc_value(pcommand.contract_command_base) :
+    """Increment the value of a counter
+    """
+
+    name = "inc_value"
+    help = "increment the counter"
+
+    @classmethod
+    def invoke(cls, state, context, **kwargs) :
+
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+        if not save_file :
+            raise ValueError('counter contract must be created and initialized')
+
         session = pbuilder.SessionParameters(save_file=save_file)
-
-        # and we need the issuer contract source to validate the issuer
-        issuer_context = context.get_context('token_issuer_context')
-        issuer_contract_source = issuer_context['source']
-        issuer_contract_class = 'token_issuer'
-
-        pcontract.invoke_contract_op(
-            op_initialize,
+        result = pcontract.invoke_contract_op(
+            op_inc_value,
             state, context, session,
-            None,
-            (issuer_contract_class, issuer_contract_source),
-            ledger_key,
-            image,
-            border,
             **kwargs)
 
-        cls.display('created guardian in {}'.format(save_file))
-        return save_file
+        cls.display('current value of the counter is {}'.format(result))
+        return result
+
+# -----------------------------------------------------------------
+# get the value of a counter
+# -----------------------------------------------------------------
+class cmd_get_value(pcommand.contract_command_base) :
+    """Get the value of a counter
+    """
+
+    name = "get_value"
+    help = "get the current value of the counter"
+
+    @classmethod
+    def invoke(cls, state, context, **kwargs) :
+
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+        if not save_file :
+            raise ValueError('counter contract must be created and initialized')
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+        result = pcontract.invoke_contract_op(
+            op_get_value,
+            state, context, session,
+            **kwargs)
+
+        cls.display('current value of the counter is {}'.format(result))
+        return result
+
 
 ## -----------------------------------------------------------------
 ## Create the generic, shell independent version of the aggregate command
 ## -----------------------------------------------------------------
 __operations__ = [
-    op_initialize,
-    op_provision_token_issuer,
-    op_provision_token_object,
-    op_process_capability,
-    op_add_endpoint,
-    op_get_contract_code_metadata,
-    op_get_contract_metadata,
-    op_get_ledger_key,
-    op_get_verifying_key,
+    op_inc_value,
+    op_get_value,
 ]
 
-do_da_guardian_contract = pcontract.create_shell_command('da_guardian_contract', __operations__)
+do_example_counter_contract = pcontract.create_shell_command('example_counter_contract', __operations__)
 
 __commands__ = [
-    cmd_create_guardian,
-    cmd_provision_token_issuer,
-    cmd_provision_token_object,
+    cmd_create_counter,
+    cmd_inc_value,
+    cmd_get_value,
 ]
 
-do_da_guardian = pcommand.create_shell_command('da_guardian', __commands__)
+do_example_counter = pcommand.create_shell_command('example_counter', __commands__)
 
 ## -----------------------------------------------------------------
 ## Enable binding of the shell independent version to a pdo-shell command
 ## -----------------------------------------------------------------
 def load_commands(cmdclass) :
-    pshell.bind_shell_command(cmdclass, 'da_guardian', do_da_guardian)
-    pshell.bind_shell_command(cmdclass, 'da_guardian_contract', do_da_guardian_contract)
+    pshell.bind_shell_command(cmdclass, 'example_counter', do_example_counter)
+    pshell.bind_shell_command(cmdclass, 'example_counter_contract', do_example_counter_contract)

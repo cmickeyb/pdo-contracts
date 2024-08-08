@@ -49,7 +49,7 @@ F_LEDGER_URL=${PDO_LEDGER_URL}
 F_LOGLEVEL=${PDO_LOG_LEVEL:-info}
 F_LOGFILE=${PDO_LOG_FILE:-__screen__}
 F_CONTEXT_FILE=${SOURCE_ROOT}/test/test_context.toml
-F_CONTEXT_TEMPLATES=${PDO_HOME}/contracts/exchange/context
+F_CONTEXT_TEMPLATES=${PDO_HOME}/contracts/example/context
 
 F_USAGE='--host service-host | --ledger url | --loglevel [debug|info|warn] | --logfile file'
 SHORT_OPTS='h:l:'

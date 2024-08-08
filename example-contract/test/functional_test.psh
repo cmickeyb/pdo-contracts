@@ -23,8 +23,64 @@
 set --conditional -s home -v .
 set --conditional -s data -v .
 set --conditional -s save -v .
+set --conditional -s contracts -v ${home}/contracts/example
+set --conditional -s plugins -v ${home}/contracts/plugins/example
+
+if -e "${_identity_}" "__unknown__"
+   identity -n user1
+fi
+
+set --conditional -s _counter1_ -v ${save}/counter1.pdo
+set --conditional -s _counter2_ -v ${save}/counter2.pdo
+
+script -f ${home}/contracts/exchange/scripts/init.psh
 
 load_plugin -m pdo.example.plugins.counter
 
+## -----------------------------------------------------------------
+echo ${HEADER} create the counter ${ENDC}
+## -----------------------------------------------------------------
+trap_error
 
+contract create -c example_counter --source ${contracts}/_example_counter -f ${_counter1_}
+if -o ${_error_code_} 0
+   echo ${ERROR} [ERROR ${_error_code_}] failed to create the counter; ${_error_message_}
+   exit -v ${_error_code_}
+fi
+
+## -----------------------------------------------------------------
+echo ${HEADER} increment the counter ${ENDC}
+## -----------------------------------------------------------------
+example_counter_contract inc_value -f ${_counter1_} -s _value_
+if -o ${_error_code_} 0
+   echo ${ERROR} [ERROR ${_error_code_}] failed to increment the counter; ${_error_message_}
+   exit -v ${_error_code_}
+fi
+
+if --not -e ${_value_} 1
+   echo ${ERROR} [ERROR ${_error_code_}] invalid initial value; ${_value_}
+   exit -v -1
+fi
+
+## repeat the increment
+example_counter_contract inc_value -f ${_counter1_} -s _value_
+example_counter_contract inc_value -f ${_counter1_} -s _value_
+example_counter_contract inc_value -f ${_counter1_} -s _value_
+example_counter_contract inc_value -f ${_counter1_} -s _value_
+
+## -----------------------------------------------------------------
+echo ${HEADER} get the counter value ${ENDC}
+## -----------------------------------------------------------------
+example_counter_contract get_value -f ${_counter1_} -s _value_
+if -o ${_error_code_} 0
+   echo ${ERROR} [ERROR ${_error_code_}] failed to get the counter value; ${_error_message_}
+   exit -v ${_error_code_}
+fi
+
+if --not -e ${_value_} 5
+   echo ${ERROR} [ERROR ${_error_code_}] invalid counter value; ${_value_} instead of 5
+   exit -v -1
+fi
+
+echo ${HEADER} all counter tests passed ${ENDC}
 exit

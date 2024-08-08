@@ -157,3 +157,15 @@ try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/counter.toml -
 # -----------------------------------------------------------------
 # start the tests
 # -----------------------------------------------------------------
+yell create a counter
+try example_counter create ${OPTS} --contract counter.mycounter
+
+yell increment the counter
+try example_counter inc_value ${OPTS} --contract counter.mycounter
+try example_counter inc_value ${OPTS} --contract counter.mycounter
+try example_counter inc_value ${OPTS} --contract counter.mycounter
+try example_counter inc_value ${OPTS} --contract counter.mycounter
+try example_counter inc_value ${OPTS} --contract counter.mycounter
+
+yell get the value of the counter
+try example_counter get_value ${OPTS} --contract counter.mycounter
