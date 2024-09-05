@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+INCLUDE(family.cmake)
+
 # ---------------------------------------------
 # Set up the include list
 # ---------------------------------------------
-SET (EXAMPLE_INCLUDES ${WASM_INCLUDES})
-LIST(APPEND EXAMPLE_INCLUDES ${CMAKE_CURRENT_LIST_DIR})
+SET (${CF_HANDLE}_INCLUDES ${WASM_INCLUDES})
+LIST(APPEND ${CF_HANDLE}_INCLUDES ${CMAKE_CURRENT_LIST_DIR})
 
 # ---------------------------------------------
 # Set up the default source list
 # ---------------------------------------------
-FILE(GLOB EXAMPLE_COMMON_SOURCE ${CMAKE_CURRENT_LIST_DIR}/example/common/*.cpp)
-FILE(GLOB EXAMPLE_CONTRACT_SOURCE ${CMAKE_CURRENT_LIST_DIR}/example/contracts/*.cpp)
+FILE(GLOB ${CF_HANDLE}_COMMON_SOURCE ${CMAKE_CURRENT_LIST_DIR}/${CF_NAME}/common/*.cpp)
+FILE(GLOB ${CF_HANDLE}_CONTRACT_SOURCE ${CMAKE_CURRENT_LIST_DIR}/${CF_NAME}/contracts/*.cpp)
 
-SET (EXAMPLE_SOURCES)
-LIST(APPEND EXAMPLE_SOURCES ${EXAMPLE_COMMON_SOURCE})
-LIST(APPEND EXAMPLE_SOURCES ${EXAMPLE_CONTRACT_SOURCE})
+SET (${CF_HANDLE}_SOURCES PARENT_SCOPE)
+LIST(APPEND ${CF_HANDLE}_SOURCES ${${CF_HANDLE}_COMMON_SOURCE})
+LIST(APPEND ${CF_HANDLE}_SOURCES ${${CF_HANDLE}_CONTRACT_SOURCE})
 
 # ---------------------------------------------
 # Build the wawaka contract common library
 # ---------------------------------------------
-SET(EXAMPLE_LIB ww_example)
+SET(${CF_HANDLE}_LIB ww_${CF_NAME})

@@ -14,20 +14,13 @@
 
 import logging
 
-import pdo.common.crypto as pcrypto
-from pdo.common.key_value import KeyValueStore
-from pdo.contract import ContractCode
 from pdo.contract import invocation_request
-from pdo.submitter.create import create_submitter
 
 import pdo.client.builder as pbuilder
 import pdo.client.builder.command as pcommand
 import pdo.client.builder.contract as pcontract
 import pdo.client.builder.shell as pshell
 import pdo.client.commands.contract as pcontract_cmd
-from pdo.client.commands.eservice import get_eservice_from_contract
-
-import pdo.exchange.plugins.guardian as guardian_base
 
 logger = logging.getLogger(__name__)
 
@@ -90,11 +83,7 @@ class cmd_create_counter(pcommand.contract_command_base) :
         if pcontract_cmd.get_contract_from_context(state, context) :
             return
 
-        # need the ledger key as the root of trust for binding to the issuer
-        ledger_submitter = create_submitter(state.get(['Ledger']))
-        ledger_key = ledger_submitter.get_ledger_info()
-
-        # create the guardian contract
+        # create the counter contract
         save_file = pcontract_cmd.create_contract_from_context(state, context, 'example_counter', **kwargs)
         context['save_file'] = save_file
 

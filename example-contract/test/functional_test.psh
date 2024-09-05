@@ -33,7 +33,13 @@ fi
 set --conditional -s _counter1_ -v ${save}/counter1.pdo
 set --conditional -s _counter2_ -v ${save}/counter2.pdo
 
-script -f ${home}/contracts/exchange/scripts/init.psh
+## some definitions to make it easier to display text
+set -s ENDC   -v "\033[0m"
+set -s BOLD   -v '\033[1m'
+set -s HEADER -v "\033[95m"
+set -s ERROR  -v "\033[91m"
+set -s WARN   -v "\033[93m"
+set -s INFO   -v "\033[92m"
 
 load_plugin -m pdo.example.plugins.counter
 
