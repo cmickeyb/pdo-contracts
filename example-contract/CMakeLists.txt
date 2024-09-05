@@ -36,7 +36,7 @@ SET_TARGET_PROPERTIES(${${CF_HANDLE}_LIB} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 # prepend the name of the contract family to the name of the contract
 # -----------------------------------------------------------------
 FOREACH(contract ${CF_CONTRACTS})
-  BUILD_CONTRACT(${CF_CONTRACTS}_${contract} contracts/${contract}.cpp)
+  BUILD_CONTRACT(${CF_CONTRACTS}_${contract} src/contracts/${contract}.cpp)
 ENDFOREACH()
 
 # -----------------------------------------------------------------

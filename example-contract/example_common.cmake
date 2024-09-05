@@ -18,13 +18,13 @@ INCLUDE(family.cmake)
 # Set up the include list
 # ---------------------------------------------
 SET (${CF_HANDLE}_INCLUDES ${WASM_INCLUDES})
-LIST(APPEND ${CF_HANDLE}_INCLUDES ${CMAKE_CURRENT_LIST_DIR})
+LIST(APPEND ${CF_HANDLE}_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 # ---------------------------------------------
 # Set up the default source list
 # ---------------------------------------------
-FILE(GLOB ${CF_HANDLE}_COMMON_SOURCE ${CMAKE_CURRENT_LIST_DIR}/${CF_NAME}/common/*.cpp)
-FILE(GLOB ${CF_HANDLE}_CONTRACT_SOURCE ${CMAKE_CURRENT_LIST_DIR}/${CF_NAME}/contracts/*.cpp)
+FILE(GLOB ${CF_HANDLE}_COMMON_SOURCE ${CMAKE_CURRENT_LIST_DIR}/src/common/*.cpp)
+FILE(GLOB ${CF_HANDLE}_CONTRACT_SOURCE ${CMAKE_CURRENT_LIST_DIR}/src/methods/*.cpp)
 
 SET (${CF_HANDLE}_SOURCES PARENT_SCOPE)
 LIST(APPEND ${CF_HANDLE}_SOURCES ${${CF_HANDLE}_COMMON_SOURCE})

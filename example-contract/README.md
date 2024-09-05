@@ -41,9 +41,29 @@ a bash shell, or a Jupyter notebook.
   relationship between contract objects and help to coordinate the
   configuration of dependent contract objects.
 
-* The `contracts` directory contains one source file for each type of
-  contract in the contract family. The source file specifies the set of
-  methods that are associated with the contract.
+* The `src` directory contains the source files used to build the
+  contracts in the contract family. The source directory contains
+  several subdirectories:
+
+  * The `common` directory contains modules that will be shared
+    amongst all of the contracts.
+
+  * The `packages` directory may contain external dependencies
+    required for the contract.
+
+  * The `methods` directory contains modules that implement different
+    groups of methods. For simple contracts there is generally one
+    method module per contract. More complex contracts may mix and
+    match methods from different modules.
+
+  * The `contracts` directory contains the definition of the contracts
+    themselves. These are generally specified as a collection of
+    methods defined in the `methods` directory.
+
+  * Finally, there is often a directory that contains interface
+    definitions that may be used by other contract families to re-use
+    methods. For example, this contract family defines an interface
+    for the counter contract in the `example` directory.
 
 * The `docs` directory generally contains interface specifications for
   the methods in the contract. It may also contain the templates for
@@ -53,14 +73,6 @@ a bash shell, or a Jupyter notebook.
   you customize your own contract family, you will need to update
   information about the mapping between contract types and compiled
   contract code.
-
-* The `example` directory in this specific contract family contains
-  code and definitions that are used by the source files in the
-  `contracts` directory. That is, the source files in the `contracts`
-  directory tend to specify methods that are defined in the source
-  files in the `example` directory. The use of a separate `example`
-  directory makes it possible to share code between contracts and even
-  between contract families.
 
 * The `pdo` directory is the root of the Python modules associated
   with the contract family. The Python modules contain plugins for the
