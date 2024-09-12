@@ -17,8 +17,12 @@
 # standard paths, you should not need to change anything below.
 # Information about the contract family should be set in family.cmake
 # -----------------------------------------------------------------
+INCLUDE(${CMAKE_SOURCE_DIR}/exchange-contract/exchange_common.cmake)
+LIST(APPEND WASM_LIBRARIES ${EXCHANGE_LIB})
+LIST(APPEND WASM_INCLUDES ${EXCHANGE_INCLUDES})
+
 INCLUDE(family.cmake)
-INCLUDE(${CF_NAME}_common.cmake)
+INCLUDE(contract.cmake)
 
 LIST(APPEND WASM_LIBRARIES ${${CF_HANDLE}_LIB})
 LIST(APPEND WASM_INCLUDES ${${CF_HANDLE}_INCLUDES})
