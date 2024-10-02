@@ -23,16 +23,20 @@ jobs:
                   PDO_INTERPRETER: wawaka
                   PDO_LOG_LEVEL: warning
               run: |
-                  echo git tag
-                  git tag -l
-                  git fetch --tags --force
-                  echo git tag
-                  git tag -l
-                  echo git describe
-                  git describe --dirty
+                  git status
                   # git checkout -b ci-test-branch
                   # . private-data-objects/build/common-config.sh
 
+            - name: Fetch tags
+              id: tag
+              run: |
+                git fetch --tags --force
+                echo ::set-output name=subject::$(git for-each-ref $GITHUB_REF --format='%(contents:subject)')
+
+            - name: Print name
+              run: |
+                echo REF: ${{ github.ref }}
+                echo NAME: ${{ steps.tag.outputs.subject }}
 
             # - name: Build PDO images
             #   run: |
