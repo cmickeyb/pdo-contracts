@@ -26,7 +26,6 @@ CONTRACTS_GROUP_UID ?= $(shell id -g)
 
 DOCKER_COMMAND ?= docker
 
-DOCKER_COMPOSE_COMMAND ?= docker-compose
 ifndef DOCKER_COMPOSE_COMMAND
   DOCKER_COMPOSE_COMMAND := $(shell command -v docker-compose 2> /dev/null)
   ifndef DOCKER_COMPOSE_COMMAND
