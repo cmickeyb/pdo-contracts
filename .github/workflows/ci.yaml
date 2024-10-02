@@ -16,6 +16,8 @@ jobs:
               with:
                   submodules: recursive
                   fetch-depth: 0
+              run: |
+                git fetch --tags
 
             - name: Provide a name for the branch for use in building the images
               env:
