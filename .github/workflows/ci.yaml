@@ -15,34 +15,34 @@ jobs:
               uses: actions/checkout@v2
               with:
                   submodules: 'recursive'
+                  fetch-tags: 'true'
 
-            - name: Build and run tests for the full suite of contract families
-              if: "!contains(github.event.commits[0].message, '[example]')"
+            - name: Provide a name for the branch for use in building the images
               env:
                   PDO_INTERPRETER: wawaka
                   PDO_LOG_LEVEL: warning
+              run: |
+                  git checkout -b ci-test-branch
+                  . private-data-objects/build/common-config.sh
+
+            - name: Build PDO images
+              run: |
+                  make -C docker build_pdo_images
+
+            - name: Build and run tests for the full suite of contract families
+              if: "!contains(github.event.commits[0].message, '[example]')"
               run: |
                   # The creation of a dummy branch is necessary for the CI tests
                   # to work on PRs. Based on empirical results, in the absence of
                   # this command, CI tests work on the main branch and on local
                   # branches. However, they fail as a PR is created.
-                  git checkout -b ci-test-branch
-                  . private-data-objects/build/common-config.sh
-                  make -C docker build_pdo_images
                   make -C docker test
 
             - name: Build and run tests for the example contract family
               if: "contains(github.event.commits[0].message, '[example]')"
-              env:
-                  PDO_INTERPRETER: wawaka
-                  PDO_LOG_LEVEL: warning
               run: |
                   # The creation of a dummy branch is necessary for the CI tests
                   # to work on PRs. Based on empirical results, in the absence of
                   # this command, CI tests work on the main branch and on local
                   # branches. However, they fail as a PR is created.
-                  git checkout -b ci-test-branch
-                  ls -l .
-                  . private-data-objects/build/common-config.sh
-                  make -C docker build_pdo_images
                   make -C docker example
