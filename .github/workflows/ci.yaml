@@ -13,6 +13,8 @@ jobs:
         steps:
             - name: Check out repo
               uses: actions/checkout@v2
+              with:
+                  submodules: 'recursive'
 
             - name: Build and run tests for the full suite of contract families
               if: "!contains(github.event.commits[0].message, '[example]')"
@@ -40,6 +42,7 @@ jobs:
                   # this command, CI tests work on the main branch and on local
                   # branches. However, they fail as a PR is created.
                   git checkout -b ci-test-branch
+                  ls -l .
                   . private-data-objects/build/common-config.sh
                   make -C docker build_pdo_images
                   make -C docker example
