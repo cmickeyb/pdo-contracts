@@ -12,36 +12,21 @@ jobs:
 
         steps:
             - name: Check out repo
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   submodules: recursive
                   fetch-depth: 0
-              run: |
-                git fetch --tags
-
-            - name: Provide a name for the branch for use in building the images
-              env:
-                  PDO_INTERPRETER: wawaka
-                  PDO_LOG_LEVEL: warning
-              run: |
-                  git status
-                  git describe --always --broken=BAD
-                  # git checkout -b ci-test-branch
-                  # . private-data-objects/build/common-config.sh
 
             - name: Fetch tags
-              id: tag
               run: |
-                git fetch --tags --force
-                echo ::set-output name=subject::$(git for-each-ref $GITHUB_REF --format='%(contents:subject)')
+                git rev-parse --count v0.1.0
 
-            - name: Print name
-              run: |
-                echo REF: ${{ github.ref }}
-                echo NAME: ${{ steps.tag.outputs.subject }}
-
-            # - name: Build PDO images
+            # - name: Configure PDO and build the images
+            #   env:
+            #       PDO_INTERPRETER: wawaka
+            #       PDO_LOG_LEVEL: warning
             #   run: |
+            #       . private-data-objects/build/common-config.sh
             #       make -C docker build_pdo_images
 
             # - name: Build and run tests for the full suite of contract families
