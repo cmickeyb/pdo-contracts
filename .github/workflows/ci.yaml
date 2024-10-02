@@ -12,11 +12,11 @@ jobs:
 
         steps:
             - name: Check out repo
-              uses: actions/checkout@v4
+              uses: actions/checkout@v3
               with:
                   submodules: recursive
                   fetch-tags: true
-                  fetch-depth: 0
+                  fetch-depth: 1000
 
             - name: Provide a name for the branch for use in building the images
               env:
@@ -24,6 +24,7 @@ jobs:
                   PDO_LOG_LEVEL: warning
               run: |
                   git status
+                  git describe
                   # git checkout -b ci-test-branch
                   # . private-data-objects/build/common-config.sh
 
