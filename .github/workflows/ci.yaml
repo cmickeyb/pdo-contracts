@@ -22,6 +22,7 @@ jobs:
                   PDO_INTERPRETER: wawaka
                   PDO_LOG_LEVEL: warning
               run: |
+                  git fetch --tags
                   git describe --dirty
                   # git checkout -b ci-test-branch
                   # . private-data-objects/build/common-config.sh
