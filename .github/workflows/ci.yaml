@@ -29,6 +29,7 @@ jobs:
 
             - name: Show the version
               run: |
+                echo ${{ github.ref }}
                 echo CONTRACTS_VERSION is $CONTRACTS_VERSION
                 echo PDO_VERSION is $PDO_VERSION
 
