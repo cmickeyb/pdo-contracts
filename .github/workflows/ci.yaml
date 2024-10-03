@@ -23,7 +23,7 @@ jobs:
 
             - name: Get the version
               run: |
-                git describe ${GITHUB_SHA}
+                git rev-list cfd6a.. --count
 
             # - name: Configure PDO and build the base images
             #   env:
