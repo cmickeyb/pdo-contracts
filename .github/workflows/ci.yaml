@@ -21,9 +21,16 @@ jobs:
                   submodules: recursive
                   fetch-depth: 0
 
-            - name: Get the version
+            - name: Set the version
               run: |
-                git rev-list cfd6a.. --count
+                echo "CONTRACTS_VERSION=$(git rev-list cfd6ab57f345c67.. --count)" >> $GITHUB_ENV
+                echo "PDO_VERSION=$(git rev-list 5fa32a13.. --count)" >> $GITHUB_ENV
+
+            - name: Show the version
+              run: |
+                echo CONTRACTS_VERSION is $CONTRACTS_VERSION
+                echo PDO_VERSION is $PDO_VERSION
+
 
             # - name: Configure PDO and build the base images
             #   env:
