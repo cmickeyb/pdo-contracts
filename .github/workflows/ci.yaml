@@ -24,8 +24,8 @@ jobs:
 
             - name: Set the version
               run: |
-                echo "CONTRACTS_VERSION=$(git rev-list cfd6ab57f345c67..HEAD --count)" >> $GITHUB_ENV
-                echo "PDO_VERSION=$(git rev-list 5fa32a13..HEAD --count)" >> $GITHUB_ENV
+                echo "CONTRACTS_VERSION=$(git rev-list cfd6 --count)" >> $GITHUB_ENV
+                echo "PDO_VERSION=$(git rev-list 5fa3 --count)" >> $GITHUB_ENV
 
             - name: Show the version
               run: |
