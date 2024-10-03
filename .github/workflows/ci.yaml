@@ -24,8 +24,10 @@ jobs:
 
             - name: Set the version
               run: |
+                git fetch orgin --tags --force
+                git tag -l
                 echo "PDO_VERSION=$(cd private-data-objects && git rev-list 5fa3..HEAD --count)" >> $GITHUB_ENV
-                echo "CONTRACTS_VERSION=$(git rev-list cfd6..HEAD --count)" >> $GITHUB_ENV
+                echo "CONTRACTS_VERSION=$(git rev-list b57f..HEAD --count)" >> $GITHUB_ENV
 
             - name: Show the version
               run: |
