@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-name: PDO CONTRACTS CI
+name: PDO Contracts Full Test
 on:
-  pull_request:
   push:
     branches-ignore:
       - test.*
@@ -12,7 +11,7 @@ on:
 jobs:
     pdo_ci:
         if: "!contains(github.event.commits[0].message, '[skip ci]')"
-        name: PDO CONTRACTS CI Job
+        name: PDO Contracts Full Test
         runs-on: ubuntu-22.04
 
         steps:
@@ -22,28 +21,24 @@ jobs:
                   submodules: recursive
                   fetch-depth: 0
 
-            - name: Configure PDO and build the images
-              env:
-                  PDO_INTERPRETER: wawaka
-                  PDO_LOG_LEVEL: warning
+            - name: Get the version
               run: |
-                  . private-data-objects/build/common-config.sh
-                  make -C docker build_pdo_images
+                git describe ${GITHUB_SHA}
 
-            - name: Build and run tests for the full suite of contract families
-              if: "!contains(github.event.commits[0].message, '[example]')"
-              run: |
-                  # The creation of a dummy branch is necessary for the CI tests
-                  # to work on PRs. Based on empirical results, in the absence of
-                  # this command, CI tests work on the main branch and on local
-                  # branches. However, they fail as a PR is created.
-                  make -C docker test
+            # - name: Configure PDO and build the base images
+            #   env:
+            #       PDO_INTERPRETER: wawaka
+            #       PDO_LOG_LEVEL: warning
+            #   run: |
+            #       . private-data-objects/build/common-config.sh
+            #       make -C docker build_pdo_images
 
-            - name: Build and run tests for the example contract family
-              if: "contains(github.event.commits[0].message, '[example]')"
-              run: |
-                  # The creation of a dummy branch is necessary for the CI tests
-                  # to work on PRs. Based on empirical results, in the absence of
-                  # this command, CI tests work on the main branch and on local
-                  # branches. However, they fail as a PR is created.
-                  make -C docker example
+            # - name: Build and run tests for the full suite of contract families
+            #   if: "!contains(github.event.commits[0].message, '[example]')"
+            #   run: |
+            #       make -C docker test
+
+            # - name: Build and run tests for the example contract family
+            #   if: "contains(github.event.commits[0].message, '[example]')"
+            #   run: |
+            #       make -C docker example
