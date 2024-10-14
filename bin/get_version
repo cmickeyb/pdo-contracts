@@ -14,26 +14,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
+import os
+import pathlib
 import subprocess
-import sys
-import warnings
 
-count = 0
-commit = ''
-dirty = ''
+pdo_source_root=pathlib.Path(__file__).parent.parent
+version_file = pdo_source_root / 'VERSION'
 
-version_file_name = 'VERSION'
+parser = argparse.ArgumentParser()
 
-try :
-    with open(version_file_name, 'r') as vf :
-        (version, commit, *rest) = vf.readline().strip().split('\t')
+parser.add_argument(
+    '--version-file', '-v',
+    help='File where version information is stored',
+    type=str)
 
-    (major, minor, patch) = version.strip('v').split('.')
+options = parser.parse_args()
 
-    count = subprocess.check_output(['git', 'rev-list', commit + '...HEAD', '--count']).decode('utf-8').strip()
+if options.version_file :
+    version_file = pathlib.Path(options.version_file)
+    pdo_source_root = version_file.parent
 
+# the version file is a tab separated list of version numbers and git commit hashes in reverse
+# order (newest is at the top of the file)
+with open(version_file, 'r') as vf :
+    (version, commit, *rest) = vf.readline().strip().split('\t')
 
-    print('{}.{}.{}'.format(major, minor, int(patch) + int(count)))
-except Exception as e :
-    warnings.warn('failed to compute version, using default; {}'.format(str(e)))
-    print('0.0.0')
+# the version is of the form x.y.z, there may be an optional 'v' at the beginning of the version
+# string
+(major, minor, patch) = version.strip('v').split('.')
+
+# compute the number of commits since the tagged version was
+# committed to the repository
+command = ['git', 'rev-list', commit + '...HEAD', '--count']
+output = subprocess.run(command, cwd=pdo_source_root, capture_output=True, text=True)
+count = output.stdout.strip()
+
+# the actual patch version number is the recorded patch number added to the number of commits
+# since the version was committed
+print('{}.{}.{}'.format(major, minor, int(patch) + int(count)))

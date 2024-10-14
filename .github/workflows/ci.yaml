@@ -34,6 +34,7 @@ jobs:
                 echo ${{ github.ref }}
                 echo CONTRACTS_VERSION is $CONTRACTS_VERSION
                 echo PDO_VERSION is $PDO_VERSION
+                echo CONTRACTS version is $(bin/get_version)
                 echo $(bin/get_version)
 
             # - name: Configure PDO and build the base images
