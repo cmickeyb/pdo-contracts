@@ -22,27 +22,18 @@ count = 0
 commit = ''
 dirty = ''
 
+version_file_name = 'VERSION'
+
 try :
-    output = subprocess.check_output(['git', 'describe', '--dirty'])
-    (version, *rest) = output.decode('utf-8').strip().split('-')
+    with open(version_file_name, 'r') as vf :
+        (version, commit, *rest) = vf.readline().strip().split('\t')
+
     (major, minor, patch) = version.strip('v').split('.')
 
-    # first case: this is a dirty tagged release, only dirty flag
-    if len(rest) == 1 :
-        assert rest[0] == 'dirty'
-        dirty = 'dirty'
-    # second case: this is a committed post tag release
-    elif len(rest) == 2 :
-        count = rest[0]
-        commit = rest[1]
-    # third case: this is a dirty, committed post tag release
-    elif len(rest) == 3 :
-        assert rest[2] == 'dirty'
-        count = rest[0]
-        commit = rest[1]
-        dirty = rest[2]
+    count = subprocess.check_output(['git', 'rev-list', commit + '...HEAD', '--count']).decode('utf-8').strip()
 
-    print('{}.{}.{}'.format(major, minor, count))
+
+    print('{}.{}.{}'.format(major, minor, int(patch) + int(count)))
 except Exception as e :
-    warnings.warn('failed to compute version, using default')
+    warnings.warn('failed to compute version, using default; {}'.format(str(e)))
     print('0.0.0')
