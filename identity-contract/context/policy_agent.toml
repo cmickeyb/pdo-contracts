@@ -1,0 +1,7 @@
+# -----------------------------------------------------------------
+# identity ${identity}
+# -----------------------------------------------------------------
+[identity.${identity}.policy_agent]
+identity = "${user}"
+module = "pdo.identity.plugins.policy_agent"
+source = "${ContractFamily.Identity.policy_agent.source}"

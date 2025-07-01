@@ -1,0 +1,7 @@
+# -----------------------------------------------------------------
+# identity ${identity}
+# -----------------------------------------------------------------
+[identity.${identity}.wallet]
+identity = "${user}"
+module = "pdo.identity.plugins.identity"
+source = "${ContractFamily.Identity.wallet.source}"

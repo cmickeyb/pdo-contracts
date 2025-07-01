@@ -59,6 +59,7 @@ setup(
     package_dir = {
         'pdo' : 'pdo',
         'pdo.identity.resources.etc' : 'etc',
+        'pdo.identity.resources.context' : 'context',
         'pdo.identity.resources.contracts' : '../build/identity-contract',
         'pdo.identity.resources.scripts' : 'scripts',
     },
@@ -69,6 +70,7 @@ setup(
         'pdo.identity.scripts',
         'pdo.identity.resources',
         'pdo.identity.resources.etc',
+        'pdo.identity.resources.context',
         'pdo.identity.resources.contracts',
         'pdo.identity.resources.scripts',
     ],
@@ -77,13 +79,12 @@ setup(
         'colorama',
         'pdo-client>=' + pdo_client_version,
         'pdo-common-library>=' + pdo_client_version,
-        'pdo-sservice>=' + pdo_client_version,
     ],
     entry_points = {
         'console_scripts' : [
-            'ex_identity=pdo.identity.scripts.scripts:identity',
-            'ex_policy_agent=pdo.identity.scripts.scripts:policy_agent',
-            'ex_signature_authority=pdo.identity.scripts.scripts:signature_authority',
+            'id_wallet=pdo.identity.scripts.scripts:identity',
+            'id_policy_agent=pdo.identity.scripts.scripts:policy_agent',
+            'id_signature_authority=pdo.identity.scripts.scripts:signature_authority',
         ]
     }
 )

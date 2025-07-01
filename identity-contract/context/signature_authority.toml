@@ -1,0 +1,7 @@
+# -----------------------------------------------------------------
+# identity ${identity}
+# -----------------------------------------------------------------
+[identity.${identity}.signature_authority]
+identity = "${user}"
+module = "pdo.identity.plugins.signature_authority"
+source = "${ContractFamily.Identity.signature_authority.source}"
