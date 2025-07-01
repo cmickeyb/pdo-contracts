@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 
 from pdo.contract import invocation_request
@@ -32,6 +33,10 @@ __all__ = [
     'op_describe_signing_context',
     'op_sign',
     'op_verify',
+    'cmd_get_verifying_key',
+    'cmd_register_signing_context',
+    'cmd_sign',
+    'cmd_verify',
     'cmd_create_identity',
     'do_identity',
     'do_identity_contract',
@@ -221,7 +226,8 @@ class op_sign(pcontract.contract_op_base) :
         session_params['commit'] = True
 
         bytes_message = pcrypto.string_to_byte_array(message)
-        b64_message = pcrypto.byte_array_to_base64(bytes_message)
+        b64_message = pcrypto.byte_array_to_base64(pcrypto.string_to_byte_array(message))
+
         message = invocation_request('sign', context_path=path, message=b64_message)
         result = pcontract_cmd.send_to_contract(state, message, **session_params)
         cls.log_invocation(message, result)
@@ -239,7 +245,7 @@ class op_verify(pcontract.contract_op_base) :
     def add_arguments(cls, subparser) :
         subparser.add_argument(
             '-m', '--message',
-            help='Base64 encoded string to sign',
+            help='Base64 encoded string to verify',
             type=str,
             required=True)
         subparser.add_argument(
@@ -274,6 +280,196 @@ class op_verify(pcontract.contract_op_base) :
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
+class cmd_get_verifying_key(pcommand.contract_command_base) :
+    name = "get_verifying_key"
+    help = "script to get the verifying key for a signing context"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '-e', '--extended',
+            help='Get the extended verifying key (verifying key + chain code)',
+            action='store_true')
+
+        subparser.add_argument(
+            '-f', '--file',
+            help='Base file name to save the results',
+            dest='filename',
+            type=str)
+
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='+',
+            required=True)
+
+    @classmethod
+    def invoke(cls, state, context, extended, filename, path, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+
+        op = op_get_extended_verifying_key if extended else op_get_verifying_key
+        result = pcontract.invoke_contract_op(op, state, context, session, path, **kwargs)
+
+        if filename is None :
+            cls.display(f'verifying key for {path} is {result}')
+        else :
+            try :
+                filename += '.json' if extended else '.pem'
+                with open(filename, 'w') as f :
+                    f.write(result)
+                cls.display(f'verifying key for {path} saved to {filename}')
+            except IOError as e :
+                cls.display(f'Error saving verifying key to file {filename}: {e}')
+                return False
+
+        return result
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class cmd_register_signing_context(pcommand.contract_command_base) :
+    name = "register"
+    help = "script to register a signing context"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '-d', '--description',
+            help='Description of the asset described by the identity',
+            type=str,
+            required=True)
+        subparser.add_argument(
+            '--extensible',
+            help='Allow unregistered contexts to be used from this context',
+            action='store_true')
+        subparser.add_argument(
+            '--fixed',
+            help='Only registered contexts may be used from this context',
+            action='store_false',
+            dest='extensible')
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='+',
+            required=True)
+
+    @classmethod
+    def invoke(cls, state, context, path, description, extensible, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+        result = pcontract.invoke_contract_op(
+            op_register_signing_context, state, context, session, path, description, extensible, **kwargs)
+
+        cls.display(f'registered signing context {path}')
+        return True
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class cmd_sign(pcommand.contract_command_base) :
+    name = "sign"
+    help = "script to sign a message using a signing context"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '--message',
+            help='Name of the file where the message is stored',
+            dest='message_file',
+            type=str,
+            required=True)
+
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='+',
+            required=True)
+
+        subparser.add_argument(
+            '--signature',
+            help='Name of the file where the signature will be saved',
+            dest='signature_file',
+            type=str,
+            required=True)
+
+
+    @classmethod
+    def invoke(cls, state, context, message_file, path, signature_file, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+
+        with open(message_file, 'r') as fp :
+            message = fp.read().strip()
+
+        b64_message = pcrypto.byte_array_to_base64(pcrypto.string_to_byte_array(message))
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+        result = pcontract.invoke_contract_op(op_sign, state, context, session, path, b64_message, **kwargs)
+        result = json.loads(result)
+
+        with open(signature_file, 'w') as fp :
+            fp.write(result)
+
+        cls.display(f'saved signature to {signature_file}')
+        return result
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class cmd_verify(pcommand.contract_command_base) :
+    name = "verify"
+    help = "script to verify a signature using a signing context"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '--message',
+            help='Name of the file where the message is stored',
+            dest='message_file',
+            type=str,
+            required=True)
+
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='+',
+            required=True)
+
+        subparser.add_argument(
+            '--signature',
+            help='Name of the file where the base64 encoded signature is stored',
+            dest='signature_file',
+            type=str,
+            required=True)
+
+    @classmethod
+    def invoke(cls, state, context, message_file, path, signature_file, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+
+        with open(message_file, 'r') as fp :
+            message = fp.read().strip()
+
+        b64_message = pcrypto.byte_array_to_base64(pcrypto.string_to_byte_array(message))
+
+        with open(signature_file, 'r') as fp :
+            signature = fp.read().strip()
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+
+        try :
+            result = pcontract.invoke_contract_op(op_verify, state, context, session, path, b64_message, signature, **kwargs)
+            cls.display('signature verified')
+        except Exception as e :
+            cls.display('failed to verify signature')
+            raise ValueError('signature verification failed') from e
+
+        return True
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 class cmd_create_identity(pcommand.contract_command_base) :
     name = "create"
     help = "script to create an identity"
@@ -300,7 +496,7 @@ class cmd_create_identity(pcommand.contract_command_base) :
         if save_file :
             return save_file
 
-        # create the vetting organization type
+        # create the identity contract
         save_file = pcontract_cmd.create_contract_from_context(state, context, 'identity', **kwargs)
         context['save_file'] = save_file
 
@@ -330,6 +526,10 @@ __operations__ = [
 do_identity_contract = pcontract.create_shell_command('identity_contract', __operations__)
 
 __commands__ = [
+    cmd_get_verifying_key,
+    cmd_register_signing_context,
+    cmd_sign,
+    cmd_verify,
     cmd_create_identity,
 ]
 

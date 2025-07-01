@@ -71,5 +71,5 @@ BUILD_WHEEL(${CF_NAME} ${expanded_contracts})
 
 # -----------------------------------------------------------------
 INCLUDE(Test)
-# ADD_SHELL_TEST(identity script SCRIPT test/script_test.sh)
+ADD_SHELL_TEST(identity script SCRIPT test/script_test.sh)
 ADD_SHELL_TEST(${CF_NAME} functional SCRIPT test/run_tests.sh)

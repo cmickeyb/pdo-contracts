@@ -50,7 +50,7 @@ F_LEDGER_URL=${PDO_LEDGER_URL}
 F_LOGLEVEL=${PDO_LOG_LEVEL:-info}
 F_LOGFILE=${PDO_LOG_FILE:-__screen__}
 F_CONTEXT_FILE=${SOURCE_ROOT}/test/test_context.toml
-F_CONTEXT_TEMPLATES=${PDO_HOME}/contracts/exchange/context
+F_CONTEXT_TEMPLATES=${PDO_HOME}/contracts/identity/context
 
 F_USAGE='--host service-host | --ledger url | --loglevel [debug|info|warn] | --logfile file'
 SHORT_OPTS='h:l:'
@@ -104,6 +104,8 @@ for i in 1 2 3 4 5 ; do
     fi
 done
 
+TEST_ROOT=$(mktemp -d /tmp/test.XXXXXXXXX)
+
 # -----------------------------------------------------------------
 function cleanup {
     rm -f ${F_SERVICE_GROUPS_DB_FILE} ${F_SERVICE_GROUPS_DB_FILE}-lock
@@ -112,6 +114,8 @@ function cleanup {
     for key_file in ${F_KEY_FILES[@]} ; do
         rm -f ${key_file}
     done
+
+    rm -rf ${TEST_ROOT}
 }
 
 trap cleanup EXIT
@@ -138,7 +142,60 @@ cd "${SOURCE_ROOT}"
 rm -f ${F_CONTEXT_FILE}
 
 # create any necessary contexts here
+try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/identity.toml \
+    --bind identity idtest --bind user user1
 
 # -----------------------------------------------------------------
 # start the tests
 # -----------------------------------------------------------------
+
+# =================================================================
+yell TEST 1: create an identity contract
+try id_wallet create ${OPTS} --contract identity.idtest.wallet   \
+    -d 'idtest identity'
+
+yell TEST 2: register keys and retrieve them
+try id_wallet register ${OPTS} --contract identity.idtest.wallet \
+    -d 'fixed key idtest.fixed' --fixed --path idtest
+try id_wallet register ${OPTS} --contract identity.idtest.wallet \
+    -d 'fixed key idtest.fixed' --fixed --path idtest fixed
+try id_wallet register ${OPTS} --contract identity.idtest.wallet \
+    -d 'extended key idtest.ext1' --extensible --path idtest ext1
+
+try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
+    --path idtest fixed --file ${TEST_ROOT}/idtest.fixed
+try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
+    --path idtest ext1 --file ${TEST_ROOT}/text1.ext1
+try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
+    --path idtest ext1 ext2 --file ${TEST_ROOT}/text1.ext1.ext2
+
+try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
+    --path idtest ext1 ext2 --extended --file ${TEST_ROOT}/idtest.ext1.ext2
+
+yell TEST 3: sign credential and verify signature, fixed key
+try id_wallet sign ${OPTS} --contract identity.idtest.wallet \
+    --path idtest fixed --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/fixed_credential1.sig
+try id_wallet verify ${OPTS} --contract identity.idtest.wallet \
+    --path idtest fixed --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/fixed_credential1.sig
+
+yell TEST 4: sign credential and verify signature, extended key
+try id_wallet sign ${OPTS} --contract identity.idtest.wallet \
+    --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/ext_credential1.sig
+try id_wallet verify ${OPTS} --contract identity.idtest.wallet \
+    --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/ext_credential1.sig
+
+yell TEST 5: check invalid signatures, these should fail
+id_wallet verify ${OPTS} --contract identity.idtest.wallet --abridged \
+    --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential2.json --signature ${TEST_ROOT}/ext_credential1.sig
+if [ $? == 0 ]; then
+    die verification should have failed
+fi
+
+id_wallet verify ${OPTS} --contract identity.idtest.wallet --abridged \
+    --path idtest ext1 ext3 --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/ext_credential1.sig
+if [ $? == 0 ]; then
+    die verification should have failed
+fi
+
+# =================================================================
+yell All tests passed
