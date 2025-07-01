@@ -145,16 +145,19 @@ rm -f ${F_CONTEXT_FILE}
 try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/identity.toml \
     --bind identity idtest --bind user user1
 
+try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/signature_authority.toml \
+    --bind identity satest --bind user user2
+
 # -----------------------------------------------------------------
 # start the tests
 # -----------------------------------------------------------------
 
 # =================================================================
-yell TEST 1: create an identity contract
+yell create an identity contract
 try id_wallet create ${OPTS} --contract identity.idtest.wallet   \
     -d 'idtest identity'
 
-yell TEST 2: register keys and retrieve them
+yell register keys and retrieve them
 try id_wallet register ${OPTS} --contract identity.idtest.wallet \
     -d 'fixed key idtest.fixed' --fixed --path idtest
 try id_wallet register ${OPTS} --contract identity.idtest.wallet \
@@ -172,19 +175,19 @@ try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
 try id_wallet get_verifying_key ${OPTS} --contract identity.idtest.wallet \
     --path idtest ext1 ext2 --extended --file ${TEST_ROOT}/idtest.ext1.ext2
 
-yell TEST 3: sign credential and verify signature, fixed key
+yell sign message and verify signature, fixed key
 try id_wallet sign ${OPTS} --contract identity.idtest.wallet \
     --path idtest fixed --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/fixed_credential1.sig
 try id_wallet verify ${OPTS} --contract identity.idtest.wallet \
     --path idtest fixed --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/fixed_credential1.sig
 
-yell TEST 4: sign credential and verify signature, extended key
+yell sign message and verify signature, extended key
 try id_wallet sign ${OPTS} --contract identity.idtest.wallet \
     --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/ext_credential1.sig
 try id_wallet verify ${OPTS} --contract identity.idtest.wallet \
     --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential1.json --signature ${TEST_ROOT}/ext_credential1.sig
 
-yell TEST 5: check invalid signatures, these should fail
+yell check invalid signatures, these should fail
 id_wallet verify ${OPTS} --contract identity.idtest.wallet --abridged \
     --path idtest ext1 ext2 --message ${SCRIPTDIR}/credential2.json --signature ${TEST_ROOT}/ext_credential1.sig
 if [ $? == 0 ]; then
@@ -196,6 +199,40 @@ id_wallet verify ${OPTS} --contract identity.idtest.wallet --abridged \
 if [ $? == 0 ]; then
     die verification should have failed
 fi
+
+# =================================================================
+yell create a signature authority and register signing contexts
+try id_signature_authority create ${OPTS} --contract identity.satest.signature_authority \
+    -d 'satest signature authority'
+
+try id_signature_authority register ${OPTS} --contract identity.satest.signature_authority \
+    -d 'fixed key satest' --fixed --path satest
+try id_signature_authority register ${OPTS} --contract identity.satest.signature_authority \
+    -d 'fixed key satest.fixed' --fixed --path satest fixed
+try id_signature_authority register ${OPTS} --contract identity.satest.signature_authority \
+    -d 'extended key satest.ext1' --extensible --path satest ext1
+
+yell sign a simple credential and verify signature
+try id_signature_authority sign_credential ${OPTS} --contract identity.satest.signature_authority \
+    --path satest ext1 --credential ${SCRIPTDIR}/credential1.json --signed-credential ${TEST_ROOT}/sa_credential1.json
+
+say signed credential is:
+cat ${TEST_ROOT}/sa_credential1.json
+say
+
+try id_signature_authority verify_credential ${OPTS} --contract identity.satest.signature_authority \
+    --signed-credential ${TEST_ROOT}/sa_credential1.json
+
+yell sign a complex credential and verify signature
+try id_signature_authority sign_credential ${OPTS} --contract identity.satest.signature_authority \
+    --path satest ext1 ext2 --credential ${SCRIPTDIR}/credential2.json --signed-credential ${TEST_ROOT}/sa_credential2.json
+
+say signed credential is:
+cat ${TEST_ROOT}/sa_credential2.json
+say
+
+try id_signature_authority verify_credential ${OPTS} --contract identity.satest.signature_authority \
+    --signed-credential ${TEST_ROOT}/sa_credential2.json
 
 # =================================================================
 yell All tests passed
