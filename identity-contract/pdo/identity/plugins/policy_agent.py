@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 
 from pdo.contract import invocation_request
@@ -23,7 +24,6 @@ import pdo.client.builder.shell as pshell
 import pdo.client.commands.contract as pcontract_cmd
 
 import pdo.common.crypto as pcrypto
-
 
 import pdo.identity.plugins.identity as identity_plugin
 import pdo.identity.plugins.signature_authority as signature_plugin
@@ -39,6 +39,11 @@ __all__ = [
     'op_verify_credential',
     'op_register_trusted_issuer',
     'op_issue_policy_credential',
+    'cmd_register_trusted_issuer',
+    'cmd_issue_policy_credential',
+    'cmd_verify_credential',
+    'cmd_register_signing_context',
+    'cmd_get_verifying_key',
     'cmd_create_policy_agent',
     'do_policy_agent',
     'do_policy_agent_contract',
@@ -53,6 +58,10 @@ op_describe_signing_context = identity_plugin.op_describe_signing_context
 op_sign = identity_plugin.op_sign
 op_verify = signature_plugin.op_verify
 op_verify_credential = signature_plugin.op_verify_credential
+
+cmd_verify_credential = signature_plugin.cmd_verify_credential
+cmd_register_signing_context = identity_plugin.cmd_register_signing_context
+cmd_get_verifying_key = identity_plugin.cmd_get_verifying_key
 
 logger = logging.getLogger(__name__)
 
@@ -140,44 +149,104 @@ class op_issue_policy_credential(pcontract.contract_op_base) :
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
-# class cmd_issue_policy_credential(pcommand.contract_command_base) :
-#     name = "sign_credential"
-#     help = "Sign a credential and generate the associated verifiable credential"
+class cmd_register_trusted_issuer(pcommand.contract_command_base) :
+    name = "register"
+    help = "Register a trusted issuer of input credentials"
 
-#     @classmethod
-#     def add_arguments(cls, subparser) :
-#         subparser.add_argument(
-#             '-c', '--credential',
-#             help='The name of the file containing the credential to sign',
-#             type=str,
-#             required=True)
-#         subparser.add_argument(
-#             '-s', '--signed-credential',
-#             help='Name of the file where the signed credential will be saved',
-#             type=str,
-#             required=True)
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '-i', '--issuer',
+            help='The context path for the issuer to register',
+            type=str,
+            required=True)
 
-#     @classmethod
-#     def invoke(cls, state, context, credential, path, signed_credential, **kwargs) :
-#         with open(credential, "r") as fp :
-#             credential_data = json.load(fp)
+        subparser.add_argument(
+            '-p', '--path',
+            help='Path to the signing context',
+            type=str,
+            nargs='*',
+            default=[],
+            required=False)
 
-#         save_file = pcontract_cmd.get_contract_from_context(state, context)
-#         if not save_file :
-#             raise ValueError('signature authority contract must be created and initialized')
+    @classmethod
+    def invoke(cls, state, context, issuer, path, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+        if not save_file :
+            raise ValueError('signature authority contract must be created and initialized')
 
-#         session = pbuilder.SessionParameters(save_file=save_file)
-#         signed_credential_data = pcontract.invoke_contract_op(
-#             op_issue_policy_credential,
-#             state, context, session,
-#             credential=credential_data,
-#             **kwargs)
+        # Query the issuer for the information we need for registration, this
+        # includes the contract_id, and the extended public key and the chain code
+        # associated with the path in the issuer
+        issuer_context = pbuilder.Context(state, issuer)
+        issuer_save_file = pcontract_cmd.get_contract_from_context(state, issuer_context)
+        issuer_contract = pcontract_cmd.get_contract(state, issuer_save_file)
 
-#         with open(signed_credential, "w") as fp :
-#             json.dump(signed_credential_data, fp)
+        issuer_session = pbuilder.SessionParameters(save_file=issuer_save_file)
+        issuer_keys = pcontract.invoke_contract_op(
+            op_get_extended_verifying_key,
+            state, issuer_context, issuer_session,
+            path=path,
+            **kwargs)
 
-#         cls.display('saved credential to {}'.format(signed_credential))
-#         return True
+        issuer_keys = json.loads(issuer_keys)
+        key_data = issuer_keys['public_key']
+        chaincode_data = issuer_keys['chain_code']
+
+        # Now we should have everything we need to register the issuer
+        session = pbuilder.SessionParameters(save_file=save_file)
+        pcontract.invoke_contract_op(
+            op_register_trusted_issuer,
+            state, context, session,
+            issuer=issuer_contract.contract_id,
+            path=path,
+            key=key_data,
+            chaincode=chaincode_data,
+            **kwargs)
+
+        cls.display('registered trusted issuer {}'.format(issuer))
+        return True
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+class cmd_issue_policy_credential(pcommand.contract_command_base) :
+    name = "issue_credential"
+    help = "Issue a credential based on the current policy"
+
+    @classmethod
+    def add_arguments(cls, subparser) :
+        subparser.add_argument(
+            '--signed-credential',
+            help='The name of the file where the signed credential is stored',
+            type=str,
+            required=True)
+        subparser.add_argument(
+            '--issued-credential',
+            help='The name of the file where the issued credential will be stored',
+            type=str,
+            required=True)
+
+    @classmethod
+    def invoke(cls, state, context, signed_credential, issued_credential, **kwargs) :
+        save_file = pcontract_cmd.get_contract_from_context(state, context)
+        if not save_file :
+            raise ValueError('policy agent contract must be created and initialized')
+
+        with open(signed_credential, "r") as fp :
+            signed_credential_data = json.load(fp)
+
+        session = pbuilder.SessionParameters(save_file=save_file)
+        issued_credential_data = pcontract.invoke_contract_op(
+            op_issue_policy_credential,
+            state, context, session,
+            credential=signed_credential_data,
+            **kwargs)
+
+        with open(issued_credential, "w") as fp :
+            fp.write(issued_credential_data)
+
+        cls.display('saved issued credential to {}'.format(issued_credential))
+        return True
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -207,7 +276,7 @@ class cmd_create_policy_agent(pcommand.contract_command_base) :
         if save_file :
             return save_file
 
-        # create the vetting organization type
+        # create the policy agent contract
         save_file = pcontract_cmd.create_contract_from_context(state, context, 'policy_agent', **kwargs)
         context['save_file'] = save_file
 
@@ -240,9 +309,12 @@ __operations__ = [
 do_policy_agent_contract = pcontract.create_shell_command('identity_contract', __operations__)
 
 __commands__ = [
+    cmd_get_verifying_key,
+    cmd_register_signing_context,
+    cmd_verify_credential,
+    cmd_register_trusted_issuer,
+    cmd_issue_policy_credential,
     cmd_create_policy_agent,
-    # cmd_issue_policy_credential,
-    # cmd_register_trusted_issuer,
 ]
 
 do_policy_agent = pcommand.create_shell_command('identity', __commands__)

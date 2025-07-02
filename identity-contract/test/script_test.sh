@@ -148,6 +148,9 @@ try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/identity.toml 
 try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/signature_authority.toml \
     --bind identity satest --bind user user2
 
+try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/policy_agent.toml \
+    --bind identity patest --bind user user3
+
 # -----------------------------------------------------------------
 # start the tests
 # -----------------------------------------------------------------
@@ -217,8 +220,7 @@ try id_signature_authority sign_credential ${OPTS} --contract identity.satest.si
     --path satest ext1 --credential ${SCRIPTDIR}/credential1.json --signed-credential ${TEST_ROOT}/sa_credential1.json
 
 say signed credential is:
-cat ${TEST_ROOT}/sa_credential1.json
-say
+say $(<${TEST_ROOT}/sa_credential1.json)
 
 try id_signature_authority verify_credential ${OPTS} --contract identity.satest.signature_authority \
     --signed-credential ${TEST_ROOT}/sa_credential1.json
@@ -228,11 +230,29 @@ try id_signature_authority sign_credential ${OPTS} --contract identity.satest.si
     --path satest ext1 ext2 --credential ${SCRIPTDIR}/credential2.json --signed-credential ${TEST_ROOT}/sa_credential2.json
 
 say signed credential is:
-cat ${TEST_ROOT}/sa_credential2.json
-say
+say $(< ${TEST_ROOT}/sa_credential2.json)
 
 try id_signature_authority verify_credential ${OPTS} --contract identity.satest.signature_authority \
     --signed-credential ${TEST_ROOT}/sa_credential2.json
+
+# =================================================================
+yell create a policy agent
+try id_policy_agent create ${OPTS} --contract identity.patest.policy_agent \
+    -d 'patest policy agent'
+
+yell register issuer with the policy agent
+try id_policy_agent register ${OPTS} --contract identity.patest.policy_agent \
+    --issuer identity.satest.signature_authority --path satest ext1
+
+yell issue a credential
+try id_policy_agent issue_credential ${OPTS} --contract identity.patest.policy_agent \
+    --signed-credential ${TEST_ROOT}/sa_credential1.json --issued-credential ${TEST_ROOT}/pa_credential1.json
+
+say issued credential is:
+say $(<${TEST_ROOT}/pa_credential1.json)
+
+try id_policy_agent verify_credential ${OPTS} --contract identity.patest.policy_agent \
+    --signed-credential ${TEST_ROOT}/pa_credential1.json
 
 # =================================================================
 yell All tests passed
