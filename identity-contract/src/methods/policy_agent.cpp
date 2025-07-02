@@ -86,7 +86,7 @@ bool ww::identity::policy_agent::fetch_trusted_issuer(
 // -----------------------------------------------------------------
 bool ww::identity::policy_agent::verify_credential(
     const ww::value::Object& vc_object,
-    ww::identity::VerifiableCredential vc)
+    ww::identity::VerifiableCredential& vc)
 {
     ERROR_IF_NOT(vc.deserialize(vc_object), "invalid request, ill-formed credential");
 

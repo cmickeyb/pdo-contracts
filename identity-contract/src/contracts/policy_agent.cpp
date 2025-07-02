@@ -41,7 +41,7 @@
 // -----------------------------------------------------------------
 bool ww::identity::policy_agent::policy_agent_function(
     const ww::identity::Credential& credential_in,
-    ww::identity::Credential credential_out)
+    ww::identity::Credential& credential_out)
 {
     ww::value::Object v;
 

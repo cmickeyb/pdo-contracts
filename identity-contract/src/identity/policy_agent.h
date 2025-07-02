@@ -56,7 +56,7 @@ namespace policy_agent
     // Functions to extend the functionality of the policy agent
     bool save_trusted_issuer(const std::string& issuer_id, const ww::identity::VerifyingContext& vc);
     bool fetch_trusted_issuer(const std::string& issuer_id, ww::identity::VerifyingContext& vc);
-    bool verify_credential(const ww::value::Object& vc_object, ww::identity::VerifiableCredential vc);
+    bool verify_credential(const ww::value::Object& vc_object, ww::identity::VerifiableCredential& vc);
     bool issue_credential(
         const std::string& originator,
         const std::string& contract_id,
@@ -65,7 +65,7 @@ namespace policy_agent
 
     // This function must be defined by the contract, this is not a very clean way to do
     // this but WASM does not seem to support function pointers very well
-    bool policy_agent_function(const ww::identity::Credential&, ww::identity::Credential);
+    bool policy_agent_function(const ww::identity::Credential&, ww::identity::Credential&);
 
 }; // policy_agent
 }; // identity
