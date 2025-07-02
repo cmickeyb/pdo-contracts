@@ -82,9 +82,10 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'id_wallet=pdo.identity.scripts.scripts:identity',
+            'id_credential=pdo.identity.scripts.scripts:credential',
             'id_policy_agent=pdo.identity.scripts.scripts:policy_agent',
             'id_signature_authority=pdo.identity.scripts.scripts:signature_authority',
+            'id_wallet=pdo.identity.scripts.scripts:identity',
         ]
     }
 )

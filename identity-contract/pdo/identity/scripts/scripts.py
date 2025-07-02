@@ -20,8 +20,13 @@ warnings.simplefilter("ignore")
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
-def signature_authority() :
-    run_shell_command('do_signature_authority', 'pdo.identity.plugins.signature_authority')
+def credential() :
+    run_shell_command('do_credential', 'pdo.identity.plugins.credential')
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+def identity() :
+    run_shell_command('do_identity', 'pdo.identity.plugins.identity')
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -30,5 +35,5 @@ def policy_agent() :
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
-def identity() :
-    run_shell_command('do_identity', 'pdo.identity.plugins.identity')
+def signature_authority() :
+    run_shell_command('do_signature_authority', 'pdo.identity.plugins.signature_authority')
