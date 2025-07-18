@@ -82,6 +82,7 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
+            'id_committee=pdo.identity.scripts.scripts:committee',
             'id_credential=pdo.identity.scripts.scripts:credential',
             'id_policy_agent=pdo.identity.scripts.scripts:policy_agent',
             'id_signature_authority=pdo.identity.scripts.scripts:signature_authority',

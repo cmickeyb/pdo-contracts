@@ -7,6 +7,7 @@ context/signature_authority.toml
 pdo/__init__.py
 pdo/identity/__init__.py
 pdo/identity/plugins/__init__.py
+pdo/identity/plugins/committee.py
 pdo/identity/plugins/credential.py
 pdo/identity/plugins/identity.py
 pdo/identity/plugins/policy_agent.py

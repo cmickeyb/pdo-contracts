@@ -35,5 +35,10 @@ def policy_agent() :
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
+def committee() :
+    run_shell_command('do_committee', 'pdo.identity.plugins.committee')
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 def signature_authority() :
     run_shell_command('do_signature_authority', 'pdo.identity.plugins.signature_authority')
