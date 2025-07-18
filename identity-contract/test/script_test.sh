@@ -115,7 +115,7 @@ function cleanup {
         rm -f ${key_file}
     done
 
-    rm -rf ${TEST_ROOT}
+    # rm -rf ${TEST_ROOT}
 }
 
 trap cleanup EXIT
@@ -150,6 +150,9 @@ try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/signature_auth
 
 try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/policy_agent.toml \
     --bind identity patest --bind user user3
+
+try pdo-context load ${OPTS} --import-file ${F_CONTEXT_TEMPLATES}/committee.toml \
+    --bind user user1 --bind committee cotest
 
 # -----------------------------------------------------------------
 # start the tests
@@ -266,6 +269,47 @@ try id_credential extract --signed-credential ${TEST_ROOT}/pa_credential2.json
 
 try id_policy_agent verify_credential ${OPTS} --contract identity.patest.policy_agent \
     --signed-credential ${TEST_ROOT}/pa_credential2.json
+
+# =================================================================
+yell create a committee
+
+try id_committee create ${OPTS} --contract identity.cotest.committee \
+    -d 'cotest committee' --members user1 user2 user3
+
+F_RESOLUTION1=$(try id_committee propose_resolution ${OPTS} --contract identity.cotest.committee \
+    -c ${SCRIPTDIR}/credential1.json)
+say proposed resolution is: $F_RESOLUTION1
+
+try id_committee vote ${OPTS} --contract identity.cotest.committee \
+    --identity user1 --resolution-id ${F_RESOLUTION1} --approve
+
+try id_committee vote ${OPTS} --contract identity.cotest.committee \
+    --identity user2 --resolution-id ${F_RESOLUTION1} --approve
+
+F_RESOLUTION2=$(try id_committee propose_resolution ${OPTS} --contract identity.cotest.committee \
+    -c ${SCRIPTDIR}/credential2.json)
+say proposed resolution is: $F_RESOLUTION2
+
+try id_committee vote ${OPTS} --contract identity.cotest.committee \
+    --identity user2 --resolution-id ${F_RESOLUTION2} --disapprove
+
+try id_committee vote ${OPTS} --contract identity.cotest.committee \
+    --identity user3 --resolution-id ${F_RESOLUTION2} --disapprove
+
+try id_committee list_resolutions ${OPTS} --contract identity.cotest.committee
+
+try id_committee get_resolution ${OPTS} --contract identity.cotest.committee \
+    --credential ${TEST_ROOT}/resolution1.json --resolution-id ${F_RESOLUTION1}
+say resolution 1:
+say $(<${TEST_ROOT}/resolution1.json)
+
+try id_committee issue_credential ${OPTS} --contract identity.cotest.committee \
+    --issued-credential ${TEST_ROOT}/resolution1_vc.json --resolution-id ${F_RESOLUTION1}
+say verfied credential for resolution 1:
+say $(<${TEST_ROOT}/resolution1_vc.json)
+
+try id_committee verify_credential ${OPTS} --contract identity.cotest.committee \
+    --signed-credential ${TEST_ROOT}/resolution1_vc.json
 
 # =================================================================
 yell All tests passed

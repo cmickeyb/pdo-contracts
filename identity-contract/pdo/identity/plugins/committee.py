@@ -23,8 +23,7 @@ import pdo.client.builder.command as pcommand
 import pdo.client.builder.contract as pcontract
 import pdo.client.builder.shell as pshell
 import pdo.client.commands.contract as pcontract_cmd
-
-import pdo.common.crypto as pcrypto
+import pdo.common.utility as putils
 
 import pdo.identity.plugins.identity as identity_plugin
 import pdo.identity.plugins.signature_authority as signature_plugin
@@ -386,13 +385,15 @@ class cmd_propose_resolution(pcommand.contract_command_base) :
 
         # and invoke the contract operation to propose the resolution
         session = pbuilder.SessionParameters(save_file=save_file)
-        resolution_id = pcontract.invoke_contract_op(
+        results = pcontract.invoke_contract_op(
             op_propose_resolution,
             state, context, session,
             credential=credential_data,
             **kwargs)
 
-        cls.display('proposed resolution with ID {}'.format(resolution_id))
+        results = json.loads(results)
+        cls.display(results['resolution_identifier'])
+
         return True
 
 # -----------------------------------------------------------------
@@ -466,7 +467,8 @@ class cmd_list_resolutions(pcommand.contract_command_base) :
                 state, context, session,
                 **kwargs)
 
-            resolution_ids = json.loads(result)
+            result = json.loads(result)
+            resolution_ids = result['resolution_identifiers']
 
         cls.display("Proposed Resolutions:")
         for resolution_id in resolution_ids :
@@ -477,7 +479,7 @@ class cmd_list_resolutions(pcommand.contract_command_base) :
                 **kwargs)
 
             resolution_data = json.loads(resolution_data)
-            status = __status_enums__[resolution_data["status"]]
+            status = __status_enum__[resolution_data["status"]]
             cls.display(f'\t{resolution_id}\t{status}')
 
         return True
@@ -559,12 +561,13 @@ class cmd_issue_resolution_credential(pcommand.contract_command_base) :
 
         # get all the information necessary to register this contract as an endpoint with the guardian
         ledger_submitter = create_submitter(state.get(['Ledger']))
-        ledger_attestation = ledger_submitter.get_contract_info(contract_object.contract_id)
+        ledger_attestation = ledger_submitter.get_current_state_hash(contract_object.contract_id)
+        print("ledger attestation: {}".format(ledger_attestation))
 
         issued_credential_data = pcontract.invoke_contract_op(
             op_issue_resolution_credential,
             state, context, session,
-            ledger_attestation=ledger_attestation,
+            ledger_attestation=ledger_attestation['signature'],
             resolution_id=resolution_id,
             **kwargs)
 
@@ -597,8 +600,8 @@ class cmd_create_committee(pcommand.contract_command_base) :
             required=True)
 
         subparser.add_argument(
-            '-m', '--members',
-            help='List of committee members to initialize the committee with',
+            '--members',
+            help='List of committee members to initialize the committee with, key files must be in the search path',
             type=pbuilder.invocation_parameter,
             nargs='+',
             required=True)
@@ -608,6 +611,16 @@ class cmd_create_committee(pcommand.contract_command_base) :
         save_file = pcontract_cmd.get_contract_from_context(state, context)
         if save_file :
             return save_file
+
+        # get the keys for the initial committee members
+        keypath = state.get(['Key', 'SearchPath'])
+
+        member_keys = []
+        for member in members :
+            keyfile = putils.find_file_in_path("{0}_public.pem".format(member), keypath)
+            with open (keyfile, "r") as myfile:
+                verifying_key = myfile.read()
+            member_keys.append(verifying_key)
 
         # create the policy agent contract
         save_file = pcontract_cmd.create_contract_from_context(state, context, 'policy_agent', **kwargs)
@@ -632,7 +645,7 @@ class cmd_create_committee(pcommand.contract_command_base) :
             op_initialize_committee,
             state, context, session,
             ledger_key=ledger_key,
-            members=members,
+            members=member_keys,
             **kwargs)
 
         cls.display('created committee in {}'.format(save_file))

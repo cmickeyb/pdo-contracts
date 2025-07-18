@@ -1,0 +1,7 @@
+# -----------------------------------------------------------------
+# committee ${committee}
+# -----------------------------------------------------------------
+[identity.${committee}.committee]
+identity = "${user}"
+module = "pdo.identity.plugins.committee"
+source = "${ContractFamily.Identity.committee.source}"
