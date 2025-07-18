@@ -19,6 +19,7 @@ set --conditional -s contracts -v ${home}/contracts/identity
 set --conditional -s plugins -v ${home}/contracts/plugins/identity
 
 ## load_plugin -m pdo.identity.plugins.assertion
+load_plugin -m pdo.identity.plugins.committee
 load_plugin -m pdo.identity.plugins.credential
 load_plugin -m pdo.identity.plugins.identity
 load_plugin -m pdo.identity.plugins.policy_agent

@@ -1,0 +1,159 @@
+#! /usr/bin/env pdo-shell
+
+## Copyright 2025 Intel Corporation
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+
+## Two shell variables are used:
+##    data -- the directory where the contract objects are stored
+##    path -- the directory where the PSH scripts are stored
+##
+## $ pdo-shell -s create.psh -m path <contract path>
+
+set --conditional -s home -v .
+set --conditional -s data -v .
+set --conditional -s save -v .
+set --conditional -s _bin_ -v ${home}/contracts/identity/scripts
+
+script -f ${_bin_}/init.psh
+
+set -s _owner_ -v user1
+identity -n ${_owner_}
+
+set -s user1_key -i user1
+set -s user2_key -i user2
+set -s user3_key -i user3
+set -s user4_key -i user4
+set -s user5_key -i user5
+
+ledger ledger-key -s _ledger_key_
+
+## =================================================================
+echo ${HEADER} create a committee policy object ${ENDC}
+## =================================================================
+
+set -s _committee_contract_ -v ${save}/committee.pdo
+
+contract create -c identity_committee --source ${contracts}/_identity_committee -f ${_committee_contract_}
+
+echo initialize
+committee_contract initialize -w -f ${_committee_contract_} \
+    --description "this is a test committee contract"
+
+echo initialize committee
+committee_contract initialize_committee -w -f ${_committee_contract_} \
+    --ledger-key ${_ledger_key_} --members ${user1_key} ${user2_key} ${user3_key}
+
+## =================================================================
+echo ${HEADER} propose credential ${ENDC}
+## =================================================================
+set -s _credential1_ -f ${_path_}/../credential1.json
+set -s _credential2_ -f ${_path_}/../credential2.json
+
+committee_contract  propose_resolution -w -f ${_committee_contract_} \
+    --credential ${_credential1_} -s _result_
+
+parse -s _resolution_id1_ -e ${_result_} -p resolution_identifier --raw
+echo created resolution with id ${_resolution_id1_}
+
+committee_contract  propose_resolution -w -f ${_committee_contract_} \
+    --credential ${_credential2_} -s _result_
+
+parse -s _resolution_id2_ -e ${_result_} -p resolution_identifier --raw
+echo created resolution with id ${_resolution_id2_}
+
+committee_contract list_resolutions -w -f ${_committee_contract_} -s _resolutions_
+
+echo current resolutions:
+echo ${_resolutions_}
+
+committee_contract resolution_status -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id1_} -s _resolution_data_
+
+echo data for proposed resolution 1:
+echo ${_resolution_data_}
+
+committee_contract resolution_status -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id2_} -s _resolution_data_
+
+echo data for proposed resolution 2:
+echo ${_resolution_data_}
+
+## =================================================================
+echo ${HEADER} vote for resolution 1 ${ENDC}
+## =================================================================
+identity -n user1
+committee_contract approve_resolution -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id1_}
+
+identity -n user2
+committee_contract approve_resolution -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id1_}
+
+committee_contract resolution_status -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id1_} -s _resolution_data_
+parse -s _resolution_status_ -e ${_resolution_data_} -p status --raw
+echo ${HEADER} resolution 1 status: ${_resolution_status_} ${ENDC}
+
+## =================================================================
+echo ${HEADER} vote against resolution 2 ${ENDC}
+## =================================================================
+identity -n user1
+committee_contract disapprove_resolution -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id2_}
+
+identity -n user2
+committee_contract disapprove_resolution -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id2_}
+
+committee_contract resolution_status -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id2_} -s _resolution_data_
+parse -s _resolution_status_ -e ${_resolution_data_} -p status --raw
+echo ${HEADER} resolution 2 status: ${_resolution_status_} ${ENDC}
+
+## =================================================================
+echo ${HEADER} issue approved resolution 1 and verify ${ENDC}
+## =================================================================
+contract info -f ${_committee_contract_} -s _committee_id_ --field contract-id
+ledger current-state -s _sig1_ -i ${_committee_id_} -p signature
+
+committee_contract issue_resolution_credential -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id1_} --ledger-attestation ${_sig1_} -s _signed_credential1_
+
+echo issued credential:
+echo ${_signed_credential1_}
+
+committee_contract verify_credential -w -f ${_committee_contract_} \
+    -c ${_signed_credential1_} -s _result_
+if --not -e ${_result_} "true"
+   echo ${ERROR} [Error] credential verification failed ${ENDC}
+   exit -v 1
+fi
+
+## =================================================================
+echo ${HEADER} attempt to issue credential for disapproved resolution 2 ${ENDC}
+## =================================================================
+trap_error
+
+committee_contract issue_resolution_credential -w -f ${_committee_contract_} \
+    --resolution-id ${_resolution_id2_} --ledger-attestation ${_sig1_} -s _signed_credential2_
+if -e ${_error_code_} 0
+   echo ${ERROR} failed to prevent invalid credential ${ENDC}
+   exit -v -1
+fi
+
+echo successfully prevented issuing credential for disapproved resolution
+
+untrap_error
+
+exit
