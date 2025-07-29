@@ -20,7 +20,6 @@
 #include "Value.h"
 
 #include "exchange/common/Common.h"
-#include "identity/common/Credential.h"
 #include "identity/common/Resolution.h"
 #include "identity/crypto/Crypto.h"
 

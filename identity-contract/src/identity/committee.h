@@ -41,6 +41,7 @@
 // approved resolution. There is no return value.
 #define COMMITTEE_ADD_MEMBER_PARAM_SCHEMA       \
     "{"                                         \
+        SCHEMA_KW(ledger_signature,"") ","                      \
         SCHEMA_KW(resolution_identifier, "")    \
     "}"
 
@@ -49,6 +50,7 @@
 // the approved resolution. There is no return value.
 #define COMMITTEE_REMOVE_MEMBER_PARAM_SCHEMA    \
     "{"                                         \
+        SCHEMA_KW(ledger_signature,"") ","                      \
         SCHEMA_KW(resolution_identifier, "")    \
     "}"
 

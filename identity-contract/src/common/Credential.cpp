@@ -301,6 +301,13 @@ bool ww::identity::Credential::deserialize(const ww::value::Object& serialized_o
     if (! ww::identity::Credential::verify_schema(serialized_object))
         return false;
 
+    // Credential type if it is specified can be used to determine the
+    // schema used for the claims field, it need not be specified
+    const char *type = serialized_object.get_string("credentialType");
+    if (type != NULL)
+        credentialType_.assign(type);
+
+    // Required fields
     ww::value::Object serialized_issuer;
     if (! serialized_object.get_value("issuer", serialized_issuer))
         return false;

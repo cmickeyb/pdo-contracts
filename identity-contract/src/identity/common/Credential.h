@@ -232,6 +232,7 @@ namespace identity
         ww::identity::Identity issuer_;
         ww::identity::Claims credentialSubject_;
 
+        std::string credentialType_;
         std::string name_;
         std::string description_;
         std::string nonce_;

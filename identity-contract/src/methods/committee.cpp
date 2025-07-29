@@ -147,16 +147,72 @@ bool ww::identity::committee::initialize_committee(const Message& msg, const Env
 // -----------------------------------------------------------------
 bool ww::identity::committee::add_member(const Message& msg, const Environment& env, Response& rsp)
 {
-    // ASSERT: Sender must be in the committee
+    // handle pre-conditions
     ASSERT_INITIALIZED(rsp);
     ASSERT_COMMITTEE_IS_INITIALIZED(rsp);
-
-    ASSERT_SUCCESS(rsp, msg.validate_schema(COMMITTEE_ADD_MEMBER_PARAM_SCHEMA),
-                   "invalid request, missing required parameters");
 
     ww::identity::Committee committee(committee_store);
     ASSERT_SUCCESS(rsp, committee.is_member(env.originator_id_),
                    "sender is not a member of the committee");
+
+    // process parameters
+    ASSERT_SUCCESS(rsp, msg.validate_schema(COMMITTEE_ADD_MEMBER_PARAM_SCHEMA),
+                   "invalid request, missing required parameters");
+
+    // ---------- Verify that the state has been committeed ----------
+
+    // This state must be committed to ensure that the resulting credential
+    // vote is valid and can be verified by the ledger.
+
+    std::string ledger_key;
+    if (! ww::contract::attestation::get_ledger_key(ledger_key) && ledger_key.length() > 0)
+        return rsp.error("unexpected error: contract has not been initialized");
+
+    const std::string ledger_signature(msg.get_string("ledger_signature"));
+
+    ww::types::ByteArray buffer;
+    std::copy(env.contract_id_.begin(), env.contract_id_.end(), std::back_inserter(buffer));
+    std::copy(env.state_hash_.begin(), env.state_hash_.end(), std::back_inserter(buffer));
+
+    ww::types::ByteArray signature;
+    if (! ww::crypto::b64_decode(ledger_signature, signature))
+        return rsp.error("failed to decode ledger signature");
+    if (! ww::crypto::ecdsa::verify_signature(buffer, ledger_key, signature))
+        return rsp.error("failed to verify ledger signature");
+
+    // ---------- Verify that the resolution is approved ----------
+
+    // Now we know that the state has been committed, we can check the
+    // resolution status to ensure that it is in the approved state.
+    const char* resolution_id_param = msg.get_string("resolution_identifier");
+    ASSERT_SUCCESS(rsp, resolution_id_param != nullptr,
+                   "invalid request, missing required parameter: resolution_identitifer");
+
+    const std::string resolution_id(resolution_id_param);
+
+    ww::identity::Resolution resolution;
+    ww::identity::ResolutionManager resolution_manager(resolution_store);
+    ASSERT_SUCCESS(rsp, resolution_manager.get_resolution(resolution_id, resolution),
+                   "unable to retrieve the resolution");
+
+    ASSERT_SUCCESS(rsp, resolution.status_ == ww::identity::ResolutionStatus::APPROVED,
+                   "resolution is not in the approved state, cannot issue credential");
+
+    // Process the credential
+    ww::identity::Credential credential;
+    ASSERT_SUCCESS(rsp, credential.deserialize_string(resolution.serialized_credential_),
+                   "unexpected error: unable to deserialize resolution credential");
+
+    ww::identity::AddMemberCredential add_member_credential;
+    ASSERT_SUCCESS(rsp, add_member_credential.initialize(credential),
+                   "resolution is not an add member credential");
+
+    ASSERT_SUCCESS(rsp, committee.add_member(add_member_credential.publicKey_),
+                   "failed to add member");
+
+    // NOTE: with committee membership change, we should mark all pending resolutions
+    // as expired; this is to prevent resolutions that were proposed before the change
+    // from being approved by the new committee members.
 
     // ---------- RETURN ----------
     return rsp.success(true);
@@ -175,16 +231,72 @@ bool ww::identity::committee::add_member(const Message& msg, const Environment& 
 // -----------------------------------------------------------------
 bool ww::identity::committee::remove_member(const Message& msg, const Environment& env, Response& rsp)
 {
-    // ASSERT: Sender must be in the committee
+    // handle pre-conditions
     ASSERT_INITIALIZED(rsp);
     ASSERT_COMMITTEE_IS_INITIALIZED(rsp);
-
-    ASSERT_SUCCESS(rsp, msg.validate_schema(COMMITTEE_REMOVE_MEMBER_PARAM_SCHEMA),
-                   "invalid request, missing required parameters");
 
     ww::identity::Committee committee(committee_store);
     ASSERT_SUCCESS(rsp, committee.is_member(env.originator_id_),
                    "sender is not a member of the committee");
+
+    // process parameters
+    ASSERT_SUCCESS(rsp, msg.validate_schema(COMMITTEE_ADD_MEMBER_PARAM_SCHEMA),
+                   "invalid request, missing required parameters");
+
+    // ---------- Verify that the state has been committeed ----------
+
+    // This state must be committed to ensure that the resulting credential
+    // vote is valid and can be verified by the ledger.
+
+    std::string ledger_key;
+    if (! ww::contract::attestation::get_ledger_key(ledger_key) && ledger_key.length() > 0)
+        return rsp.error("unexpected error: contract has not been initialized");
+
+    const std::string ledger_signature(msg.get_string("ledger_signature"));
+
+    ww::types::ByteArray buffer;
+    std::copy(env.contract_id_.begin(), env.contract_id_.end(), std::back_inserter(buffer));
+    std::copy(env.state_hash_.begin(), env.state_hash_.end(), std::back_inserter(buffer));
+
+    ww::types::ByteArray signature;
+    if (! ww::crypto::b64_decode(ledger_signature, signature))
+        return rsp.error("failed to decode ledger signature");
+    if (! ww::crypto::ecdsa::verify_signature(buffer, ledger_key, signature))
+        return rsp.error("failed to verify ledger signature");
+
+    // ---------- Verify that the resolution is approved ----------
+
+    // Now we know that the state has been committed, we can check the
+    // resolution status to ensure that it is in the approved state.
+    const char* resolution_id_param = msg.get_string("resolution_identifier");
+    ASSERT_SUCCESS(rsp, resolution_id_param != nullptr,
+                   "invalid request, missing required parameter: resolution_identitifer");
+
+    const std::string resolution_id(resolution_id_param);
+
+    ww::identity::Resolution resolution;
+    ww::identity::ResolutionManager resolution_manager(resolution_store);
+    ASSERT_SUCCESS(rsp, resolution_manager.get_resolution(resolution_id, resolution),
+                   "unable to retrieve the resolution");
+
+    ASSERT_SUCCESS(rsp, resolution.status_ == ww::identity::ResolutionStatus::APPROVED,
+                   "resolution is not in the approved state, cannot issue credential");
+
+    // Process the credential
+    ww::identity::Credential credential;
+    ASSERT_SUCCESS(rsp, credential.deserialize_string(resolution.serialized_credential_),
+                   "unexpected error: unable to deserialize resolution credential");
+
+    ww::identity::RemoveMemberCredential remove_member_credential;
+    ASSERT_SUCCESS(rsp, remove_member_credential.initialize(credential),
+                   "resolution is not a remove member credential");
+
+    ASSERT_SUCCESS(rsp, committee.remove_member(remove_member_credential.publicKey_),
+                   "failed to remove member");
+
+    // NOTE: with committee membership change, we should mark all pending resolutions
+    // as expired; this is to prevent resolutions that were proposed before the change
+    // from being approved by the new committee members.
 
     // ---------- RETURN ----------
     return rsp.success(true);

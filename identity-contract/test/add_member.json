@@ -1,0 +1,24 @@
+{
+    "issuer": {
+        "description": "this is the identity of the proposer",
+        "id": "A6QBclbcAayAvw7BggM7iMz_Xa6NEn_YGT94mpkQmEk="
+        }
+    },
+    "credentialType": "AddMemberCredential",
+    "credentialSubject":
+    {
+        "subject": {
+            "description": "this is the contract identifier for the committee contract",
+            "id": "SMeYjWc5IOdvI3KJtPbx4WHlRvkdL5A__xcHayDj9+0="
+        },
+        "claims": {
+            "description": "this is the member being added to the committee",
+            "name": "Test User4",
+            "id" : "Q9b1k3z5J4m7g8H2fX9Y6vT3Z8K2L1N5P7Q8R2T3D4E5F6G7H8I9J0K1L2M3N4O5=",
+            "publicKey": "-----BEGIN PUBLIC KEY-----\nMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE5o0hhiAl4eiXzn1sar4igltOB+jJPpPz\n95hGtpSENrsVR24j3dsqlunlGwZ3jF+b4Q1CP4tAj6YmMRlJTbU88JRBSVM7meqt\nD2/Agij9nNB3PNtTcpFshZ7S+BmHdbsU\n-----END PUBLIC KEY-----\n"
+            }
+        }
+    },
+    "name": "AddMember Credential",
+    "description": "test credential"
+}
