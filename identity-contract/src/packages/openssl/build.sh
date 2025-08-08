@@ -97,7 +97,7 @@ DISABLE_FOR_WASM="${DISABLE_FOR_WASM} no-stdio no-threads no-ui-console no-weak-
 
 # Set up the environment variables for the build
 export CROSS_COMPILE=""
-export CFLAGS="-Ofast -Werror -Qunused-arguments -Wno-shift-count-overflow"
+export CFLAGS="-O3 -Werror -Qunused-arguments -Wno-shift-count-overflow"
 export CPPFLAGS="${CPPFLAGS} ${EXTRA_CPP_FLAGS}"
 export CXXFLAGS="-Werror -Qunused-arguments -Wno-shift-count-overflow"
 export LDFLAGS="-s -lwasi-emulated-getpid"
