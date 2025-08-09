@@ -159,15 +159,14 @@ bool ww::identity::VerifyingContext::generate_keys(
     ERROR_IF_NOT(ww::crypto::b64_decode(chain_code_, parent_chain_code), "Failed to decode chain code");
 
     pdo_contracts::crypto::signing::PublicKey parent_public_key(public_key_);
-    std::vector<const std::string>::iterator path_element;
 
     ww::types::ByteArray extended_chain_code;
     pdo_contracts::crypto::signing::PublicKey extended_key(CURVE_NID);
 
-    for (path_element = context_path_.begin(); path_element < context_path_.end(); path_element++)
+    for (const auto& path_element : context_path_)
     {
-        ERROR_IF((*path_element)[0] == '#', "Hardened keys are not supported");
-        ERROR_IF(! parent_public_key.DerivePublicKey(parent_chain_code, *path_element, extended_key, extended_chain_code),
+        ERROR_IF(path_element[0] == '#', "Hardened keys are not supported");
+        ERROR_IF(! parent_public_key.DerivePublicKey(parent_chain_code, path_element, extended_key, extended_chain_code),
                 "Failed to generate child keys");
 
         // Prepare for the next iteration

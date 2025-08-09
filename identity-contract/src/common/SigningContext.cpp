@@ -204,17 +204,16 @@ bool ww::identity::SigningContext::generate_keys(
     ww::types::ByteArray child_chain_code;
     pdo_contracts::crypto::signing::PrivateKey child_key(CURVE_NID);
 
-    std::vector<const std::string>::iterator path_element;
-    for (path_element = context_path.begin(); path_element < context_path.end(); path_element++)
+    for (const auto& path_element : context_path)
     {
-        if ((*path_element)[0] == '#')
+        if (path_element[0] == '#')
         {
-            ERROR_IF_NOT(parent_key.DeriveHardenedKey(parent_chain_code, *path_element, child_key, child_chain_code),
+            ERROR_IF_NOT(parent_key.DeriveHardenedKey(parent_chain_code, path_element, child_key, child_chain_code),
                      "Failed to generate hardened child keys");
         }
         else
         {
-            ERROR_IF_NOT(parent_key.DeriveNormalKey(parent_chain_code, *path_element, child_key, child_chain_code),
+            ERROR_IF_NOT(parent_key.DeriveNormalKey(parent_chain_code, path_element, child_key, child_chain_code),
                          "Failed to generate normal child keys");
         }
 

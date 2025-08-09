@@ -72,14 +72,13 @@ bool ww::identity::SigningContextManager::make_store_key(
 {
     key = store_key_root_;
 
-    std::vector<const std::string>::iterator path_element;
-    for ( path_element = context_path.begin(); path_element < context_path.end(); path_element++)
+    for (const auto& path_element : context_path)
     {
         // make sure that the path element does not contain the key separator
-        ERROR_IF((*path_element).find(store_key_separator_) != std::string::npos,
+        ERROR_IF(path_element.find(store_key_separator_) != std::string::npos,
                  "path element contains the key separator");
 
-        key += store_key_separator_ + (*path_element);
+        key += store_key_separator_ + path_element;
     }
 
     return true;
