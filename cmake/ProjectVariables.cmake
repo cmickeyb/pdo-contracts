@@ -45,3 +45,17 @@ EXECUTE_PROCESS(
   ERROR_QUIET
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+# Set the memory configuration for wawaka
+#   RUNTIME_TOTAL_MEMORY: The WASM runtime's global memory pool size
+#   HEAP_SIZE: Size of the runtime's heap for dynamic allocations by a WASM module.
+#   STACK_SIZE: Size of the runtime's stack for executing a WASM module
+# These numbers are based on the memory configuration used by the particular
+# contract enclave configuration. They must be less than the total memory
+# available to the enclave, which is set in the enclave configuration file.
+
+MATH(EXPR WW_STACK_SIZE "1024 * 1024")
+MATH(EXPR WW_HEAP_SIZE "63 * 1024 * 1024")
+MATH(EXPR WW_RUNTIME_MAX_MEMORY "${WW_STACK_SIZE} + ${WW_HEAP_SIZE}")
+
+MESSAGE(STATUS "Memory configuration: stack=${WW_STACK_SIZE}, heap=${WW_HEAP_SIZE}, total=${WW_RUNTIME_MAX_MEMORY}")
