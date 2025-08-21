@@ -23,7 +23,7 @@
 #include "WasmExtensions.h"
 
 #define ERROR_IF_NULL(_ptr_, _message_, ...)            \
-    if ((_ptr_) == NULL)                                \
+    if ((_ptr_) == nullptr)                             \
     {                                                   \
         CONTRACT_SAFE_LOG(3, _message_, ##__VA_ARGS__); \
         return false;                                   \
@@ -41,6 +41,13 @@
     {                                                   \
         CONTRACT_SAFE_LOG(3, _message_, ##__VA_ARGS__); \
         return false;                                   \
+    }
+
+#define CONTRACT_DEBUG_LOG(_message_, ...)                              \
+    do {                                                                \
+        char buf[512];                                                  \
+        snprintf(buf, sizeof(buf), "%s:%d: " _message_, __FILE__, __LINE__, ##__VA_ARGS__); \
+        contract_log(3, buf);                                           \
     }
 
 namespace ww
