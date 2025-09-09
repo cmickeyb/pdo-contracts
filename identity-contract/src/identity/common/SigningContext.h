@@ -77,7 +77,7 @@ namespace identity
     protected:
         bool contains(const std::string& name) const;
 
-        bool extensible_;                              // extensible implies no subcontexts
+        bool extensible_ = false;                      // extensible implies no subcontexts
         std::string description_;                      // human readable description
         std::vector<std::string> subcontexts_;         // registered subcontexts
 

@@ -16,10 +16,6 @@
 #include <algorithm>
 #include <memory>
 
-#include <openssl/crypto.h>
-#include <openssl/ec.h>
-#include <openssl/pem.h>
-
 #include "exchange/common/Common.h"
 
 #include "identity/crypto/Crypto.h"
@@ -36,7 +32,8 @@ namespace crypto = pdo_contracts::crypto;
 // -----------------------------------------------------------------
 signing::PrivateKey::PrivateKey(const int curve, const ww::types::ByteArray& numeric_key) : Key(curve)
 {
-    InitializeFromNumericKey(numeric_key);
+    if (! InitializeFromNumericKey(numeric_key))
+        CONTRACT_SAFE_ABORT("Crypto Error (PrivateKey::PrivateKey): Could not initialize from numeric key");
 }
 
 // -----------------------------------------------------------------
@@ -44,7 +41,8 @@ signing::PrivateKey::PrivateKey(const int curve, const ww::types::ByteArray& num
 // -----------------------------------------------------------------
 signing::PrivateKey::PrivateKey(const signing::PrivateKey& privateKey)
 {
-    InitializeFromPrivateKey(privateKey);
+    if (! InitializeFromPrivateKey(privateKey))
+        CONTRACT_SAFE_ABORT("Crypto Error (PrivateKey::PrivateKey): Could not initialize from private key");
 }
 
 // -----------------------------------------------------------------
@@ -67,7 +65,8 @@ signing::PrivateKey::PrivateKey(signing::PrivateKey&& privateKey)
 // -----------------------------------------------------------------
 signing::PrivateKey::PrivateKey(const std::string& encoded)
 {
-    Deserialize(encoded);
+    if (! Deserialize(encoded))
+        CONTRACT_SAFE_ABORT("Crypto Error (PrivateKey::PrivateKey): Could not deserialize private key");
 }
 
 // -----------------------------------------------------------------
@@ -96,6 +95,9 @@ bool signing::PrivateKey::InitializeFromNumericKey(
 {
     int res;
 
+    CONTRACT_DEBUG_LOG("InitializeFromNumericKey <<START>>");
+    CONTRACT_DEBUG_LOG("InitializeFromNumericKey: numeric_key.size() = %zu", numeric_key.size());
+
     crypto::BIGNUM_ptr bn_key(BN_bin2bn((const unsigned char*)numeric_key.data(), numeric_key.size(), NULL), BN_free);
     ERROR_IF_NULL(bn_key, "Crypto Error (PrivateKey::InitializeFromNumericKey): Could not create bignum");
 
@@ -109,7 +111,7 @@ bool signing::PrivateKey::InitializeFromNumericKey(
     ERROR_IF_NULL(o, "Crypto Error (PrivateKey::InitializeFromNumericKey): Cound not create BN");
 
     // setup the private key
-    crypto::EC_KEY_ptr private_key(EC_KEY_new(), EC_KEY_free);
+    crypto::EC_KEY_ptr private_key(EC_KEY_new_by_curve_name(curve_), EC_KEY_free);
     ERROR_IF_NULL(private_key, "Crypto Error (PrivateKey::InitializeFromNumericKey): Could not create new EC_KEY");
 
     crypto::EC_GROUP_ptr ec_group(EC_GROUP_new_by_curve_name(curve_), EC_GROUP_clear_free);
@@ -143,6 +145,7 @@ bool signing::PrivateKey::InitializeFromNumericKey(
     key_ = private_key.get();
     private_key.release();
 
+    CONTRACT_DEBUG_LOG("InitializeFromNumericKey <<END>>");
     return true;
 }
 
@@ -205,7 +208,10 @@ bool signing::PrivateKey::Deserialize(const std::string& encoded)
 {
     ResetKey();
 
-    crypto::BIO_ptr bio(BIO_new_mem_buf(encoded.c_str(), -1), BIO_free_all);
+    CONTRACT_DEBUG_LOG("Deserialize <<START>>");
+    CONTRACT_DEBUG_LOG("Deserialize: encoded.size() = %zu", encoded.size());
+
+    crypto::BIO_ptr bio(BIO_new_mem_buf(encoded.c_str(), encoded.size() + 1), BIO_free_all);
     ERROR_IF_NULL(bio, "Crypto Error (PrivateKey::Deserialize): Could not create BIO");
 
     // generally we would throw a CryptoError if an OpenSSL function fails; however, in this
@@ -216,6 +222,7 @@ bool signing::PrivateKey::Deserialize(const std::string& encoded)
 
     curve_ = EC_GROUP_get_curve_name(EC_KEY_get0_group(key_));
 
+    CONTRACT_DEBUG_LOG("Deserialize <<END>>");
     return true;
 }
 

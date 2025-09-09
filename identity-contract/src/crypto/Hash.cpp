@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
 
 #include "Types.h"
 #include "WasmExtensions.h"
@@ -24,7 +22,7 @@
 
 namespace pcrypto = pdo_contracts::crypto;
 
-#define USE_EVP_HASH_FUNCTIONS 1
+#define USE_EVP_HASH_FUNCTIONS 0
 
 // -----------------------------------------------------------------
 // Hash Functions

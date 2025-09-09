@@ -51,10 +51,11 @@ F_LOGLEVEL=${PDO_LOG_LEVEL:-info}
 F_LOGFILE=${PDO_LOG_FILE:-__screen__}
 F_CONTEXT_FILE=${SOURCE_ROOT}/test/test_context.toml
 F_CONTEXT_TEMPLATES=${PDO_HOME}/contracts/identity/context
+F_PREFERRED=random
 
-F_USAGE='--host service-host | --ledger url | --loglevel [debug|info|warn] | --logfile file'
-SHORT_OPTS='h:l:'
-LONG_OPTS='host:,ledger:,loglevel:,logfile:'
+F_USAGE='--host service-host | --ledger url | --loglevel [debug|info|warn] | --logfile file | --preferred [host]'
+SHORT_OPTS='h:l:p:'
+LONG_OPTS='host:,ledger:,loglevel:,logfile:,preferred:'
 
 TEMP=$(getopt -o ${SHORT_OPTS} --long ${LONG_OPTS} -n "${F_SCRIPT}" -- "$@")
 if [ $? != 0 ] ; then echo "Usage: ${F_SCRIPT} ${F_USAGE}" >&2 ; exit 1 ; fi
@@ -64,6 +65,7 @@ while true ; do
     case "$1" in
         -h|--host) F_SERVICE_HOST="$2" ; shift 2 ;;
         -1|--ledger) F_LEDGER_URL="$2" ; shift 2 ;;
+        -p|--preferred) F_PREFERRED="$2" ; shift 2 ;;
         --loglevel) F_LOGLEVEL="$2" ; shift 2 ;;
         --logfile) F_LOGFILE="$2" ; shift 2 ;;
         --help) echo "Usage: ${SCRIPT_NAME} ${F_USAGE}"; exit 0 ;;
@@ -129,7 +131,8 @@ trap cleanup EXIT
 # -----------------------------------------------------------------
 yell create the service and groups database for host ${F_SERVICE_HOST}
 try pdo-service-db import ${SHORT_OPTS} --file ${F_SERVICE_SITE_FILE}
-try pdo-eservice create_from_site ${SHORT_OPTS} --file ${F_SERVICE_SITE_FILE} --group default
+try pdo-eservice create_from_site ${SHORT_OPTS} --file ${F_SERVICE_SITE_FILE} --group default \
+    --preferred ${F_PREFERRED}
 try pdo-pservice create_from_site ${SHORT_OPTS} --file ${F_SERVICE_SITE_FILE} --group default
 try pdo-sservice create_from_site ${SHORT_OPTS} --file ${F_SERVICE_SITE_FILE} --group default \
              --replicas 1 --duration 60
@@ -168,6 +171,9 @@ try id_wallet register ${OPTS} --contract identity.idtest.wallet \
     -d 'fixed key idtest.fixed' --fixed --path idtest
 try id_wallet register ${OPTS} --contract identity.idtest.wallet \
     -d 'fixed key idtest.fixed' --fixed --path idtest fixed
+
+exit
+
 try id_wallet register ${OPTS} --contract identity.idtest.wallet \
     -d 'extended key idtest.ext1' --extensible --path idtest ext1
 

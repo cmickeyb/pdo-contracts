@@ -14,7 +14,6 @@
  */
 
 #include <stddef.h>
-#include <openssl/crypto.h>
 
 #include "Cryptography.h"
 #include "WasmExtensions.h"
@@ -45,6 +44,12 @@ extern "C" int getpagesize(void)
 extern "C" void arc4random_buf(void* buffer, size_t size)
 {
     ::random_identifier(size, (uint8_t*)buffer);
+}
+
+void operator delete(void* ptr, unsigned long _v_, std::align_val_t) _NOEXCEPT
+{
+    CONTRACT_SAFE_LOG(4, "operator delete called with alignment");
+    free(ptr);
 }
 
 // -----------------------------------------------------------------
@@ -185,6 +190,7 @@ extern "C" time_t time(time_t *tloc)
     return -1;
 }
 
+#if 0
 extern "C" int __multi3(int a, int b)
 {
     CONTRACT_SAFE_LOG(4, "__multi3 not implemented");
@@ -196,3 +202,16 @@ extern "C" int __ashlti3(int a, int b)
     CONTRACT_SAFE_LOG(4, "__ashlti3 not implemented");
     return -1;
 }
+#else
+#if 0
+extern "C" void __multi3(int32_t a, int64_t b, int64_t c, int64_t d, int64_t e)
+{
+    CONTRACT_SAFE_LOG(4, "__multi3 not implemented");
+}
+
+extern "C" void __ashlti3(int32_t a, int64_t b, int64_t c, int32_t d)
+{
+    CONTRACT_SAFE_LOG(4, "__ashlti3 not implemented");
+}
+#endif
+#endif

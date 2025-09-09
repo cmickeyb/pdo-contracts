@@ -46,7 +46,7 @@
 #define CONTRACT_DEBUG_LOG(_message_, ...)                              \
     do {                                                                \
         char buf[512];                                                  \
-        snprintf(buf, sizeof(buf), "%s:%d: " _message_, __FILE__, __LINE__, ##__VA_ARGS__); \
+        snprintf(buf, sizeof(buf), "%s:%d: " _message_, strrchr("/" __FILE__, '/')+1, __LINE__, ##__VA_ARGS__); \
         contract_log(3, buf);                                           \
     } while (false);
 

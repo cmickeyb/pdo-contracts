@@ -39,7 +39,7 @@ OPENSSL_SOURCE=openssl-${OPENSSL_VERSION}
 if [ -d ${OPENSSL_SOURCE} ]; then
     say "OpenSSL source code already exists, skipping download"
 else
-    say "Downloading OpenSSL source code"
+    say "Downloading OpenSSL source code for version ${OPENSSL_VERSION}"
     try wget https://github.com/openssl/openssl/releases/download/${OPENSSL_SOURCE}/${OPENSSL_SOURCE}.tar.gz
     try tar zxf openssl-${OPENSSL_VERSION}.tar.gz
     try rm -f openssl-${OPENSSL_VERSION}.tar.gz
@@ -85,8 +85,8 @@ DISABLE_TESTS="no-tests no-buildtest-c++ no-external-tests no-unit-test"
 # Disable features; these are inspired by the SGX SSL configuration options
 # Earlier versions of openssl can include 'no-atexit' but 3.1.0 requires a
 # different workaround
-#DISABLE_FOR_SGX="no-autoalginit no-cms no-dsa no-err no-filenames no-rdrand no-zlib"
 DISABLE_FOR_SGX="no-autoalginit no-cms no-dsa no-filenames no-rdrand no-zlib"
+#DISABLE_FOR_SGX="no-autoalginit no-cms no-dsa no-err no-filenames no-rdrand no-zlib"
 DISABLE_FOR_SGX="${DISABLE_FOR_SGX} no-bf no-cast no-chacha no-comp no-dgram no-dtls"
 DISABLE_FOR_SGX="${DISABLE_FOR_SGX} no-engine no-md4 no-mdc2 no-rc5 no-rfc3779 no-sctp"
 DISABLE_FOR_SGX="${DISABLE_FOR_SGX} no-srtp no-ssl-trace no-ssl3"
@@ -97,7 +97,7 @@ DISABLE_FOR_WASM="${DISABLE_FOR_WASM} no-stdio no-threads no-ui-console no-weak-
 
 # Set up the environment variables for the build
 export CROSS_COMPILE=""
-export CFLAGS="-O3 -Werror -Qunused-arguments -Wno-shift-count-overflow"
+export CFLAGS="-Og -Werror -Qunused-arguments -Wno-shift-count-overflow -Wl,export=__wasm_call_ctors"
 export CPPFLAGS="${CPPFLAGS} ${EXTRA_CPP_FLAGS}"
 export CXXFLAGS="-Werror -Qunused-arguments -Wno-shift-count-overflow"
 export LDFLAGS="-s -lwasi-emulated-getpid"

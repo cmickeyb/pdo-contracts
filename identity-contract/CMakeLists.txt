@@ -19,7 +19,8 @@ INCLUDE(methods.cmake)
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 SET(OPENSSL_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
-SET(OPENSSL_VERSION 3.1.0)
+#OPENSSL_VERSION=3.5.2
+SET(OPENSSL_VERSION 3.1.8)
 
 SET(OPENSSL_WASM_INCLUDE_DIR ${OPENSSL_BUILD_DIR}/precompiled/include)
 SET(OPENSSL_WASM_LIB_DIR ${OPENSSL_BUILD_DIR}/precompiled/lib)
@@ -43,10 +44,16 @@ ADD_CUSTOM_TARGET(
 )
 
 # -----------------------------------------------------------------
+#SET(CLANG_TIDY_COMMAND "/opt/wasi-sdk/bin/clang-tidy" "-checks=-*,modernize-*")
+SET(CLANG_TIDY_COMMAND "/opt/wasi-sdk/bin/clang-tidy")
+
+# -----------------------------------------------------------------
 ADD_LIBRARY(${${CF_HANDLE}_LIB} STATIC ${${CF_HANDLE}_SOURCES})
 SET_PROPERTY(TARGET ${${CF_HANDLE}_LIB} APPEND_STRING PROPERTY COMPILE_OPTIONS "${WASM_BUILD_OPTIONS}" "-Wno-deprecated")
 SET_PROPERTY(TARGET ${${CF_HANDLE}_LIB} APPEND_STRING PROPERTY LINK_OPTIONS "${WASM_LINK_OPTIONS}")
 SET_TARGET_PROPERTIES(${${CF_HANDLE}_LIB} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+SET_TARGET_PROPERTIES(${${CF_HANDLE}_LIB} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
 
 TARGET_INCLUDE_DIRECTORIES(${${CF_HANDLE}_LIB} PUBLIC ${${CF_HANDLE}_INCLUDES})
 TARGET_INCLUDE_DIRECTORIES(${${CF_HANDLE}_LIB} PUBLIC ${EXCHANGE_INCLUDES})
@@ -71,5 +78,5 @@ BUILD_WHEEL(${CF_NAME} ${expanded_contracts})
 
 # -----------------------------------------------------------------
 INCLUDE(Test)
-ADD_SHELL_TEST(identity script SCRIPT test/script_test.sh)
-ADD_SHELL_TEST(${CF_NAME} functional SCRIPT test/run_tests.sh)
+ADD_SHELL_TEST(identity script SCRIPT test/script_test.sh PARAMS -p http://localhost:7102)
+ADD_SHELL_TEST(${CF_NAME} functional SCRIPT test/run_tests.sh PARAMS -p http://localhost:7102)
