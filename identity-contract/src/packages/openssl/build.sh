@@ -39,7 +39,7 @@ OPENSSL_SOURCE=openssl-${OPENSSL_VERSION}
 if [ -d ${OPENSSL_SOURCE} ]; then
     say "OpenSSL source code already exists, skipping download"
 else
-    say "Downloading OpenSSL source code"
+    say "Downloading OpenSSL source code for version ${OPENSSL_VERSION}"
     try wget https://github.com/openssl/openssl/releases/download/${OPENSSL_SOURCE}/${OPENSSL_SOURCE}.tar.gz
     try tar zxf openssl-${OPENSSL_VERSION}.tar.gz
     try rm -f openssl-${OPENSSL_VERSION}.tar.gz
@@ -97,7 +97,7 @@ DISABLE_FOR_WASM="${DISABLE_FOR_WASM} no-stdio no-threads no-ui-console no-weak-
 
 # Set up the environment variables for the build
 export CROSS_COMPILE=""
-export CFLAGS="-O3 -Werror -Qunused-arguments -Wno-shift-count-overflow"
+export CFLAGS="-Og -Werror -Qunused-arguments -Wno-shift-count-overflow -Wl,export=__wasm_call_ctors"
 export CPPFLAGS="${CPPFLAGS} ${EXTRA_CPP_FLAGS}"
 export CXXFLAGS="-Werror -Qunused-arguments -Wno-shift-count-overflow"
 export LDFLAGS="-s -lwasi-emulated-getpid"

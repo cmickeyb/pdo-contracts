@@ -16,10 +16,6 @@
 #include <algorithm>
 #include <memory>
 
-#include <openssl/crypto.h>
-#include <openssl/ec.h>
-#include <openssl/pem.h>
-
 #include "exchange/common/Common.h"
 
 #include "identity/crypto/Crypto.h"
@@ -36,7 +32,8 @@ namespace crypto = pdo_contracts::crypto;
 // -----------------------------------------------------------------
 signing::PublicKey::PublicKey(const int curve, const ww::types::ByteArray& numeric_key) : Key(curve)
 {
-    InitializeFromNumericKey(numeric_key);
+    if (! InitializeFromNumericKey(numeric_key))
+        CONTRACT_SAFE_ABORT("Crypto Error (PublicKey::PublicKey): Could not initialize public key from numeric key");
 }
 
 // -----------------------------------------------------------------
@@ -44,7 +41,8 @@ signing::PublicKey::PublicKey(const int curve, const ww::types::ByteArray& numer
 // -----------------------------------------------------------------
 signing::PublicKey::PublicKey(const signing::PrivateKey& privateKey)
 {
-    InitializeFromPrivateKey(privateKey);
+    if (! InitializeFromPrivateKey(privateKey))
+        CONTRACT_SAFE_ABORT("Crypto Error (PublicKey::PublicKey): Could not initialize public key from private key");
 }
 
 // -----------------------------------------------------------------
@@ -52,7 +50,8 @@ signing::PublicKey::PublicKey(const signing::PrivateKey& privateKey)
 // -----------------------------------------------------------------
 signing::PublicKey::PublicKey(const signing::PublicKey& publicKey)
 {
-    InitializeFromPublicKey(publicKey);
+    if (! InitializeFromPublicKey(publicKey))
+        CONTRACT_SAFE_ABORT("Crypto Error (PublicKey::PublicKey): Could not initialize public key from public key");
 }
 
 // -----------------------------------------------------------------
@@ -75,7 +74,8 @@ signing::PublicKey::PublicKey(signing::PublicKey&& publicKey)
 // -----------------------------------------------------------------
 signing::PublicKey::PublicKey(const std::string& encoded) : Key(NID_undef)
 {
-    Deserialize(encoded);
+    if (! Deserialize(encoded))
+        CONTRACT_SAFE_ABORT("Crypto Error (PublicKey::PublicKey): Could not deserialize public key");
 }
 
 // -----------------------------------------------------------------
@@ -424,6 +424,7 @@ bool signing::PublicKey::DerivePublicKey(
     // add the child key point to the parent key point
     const EC_POINT *ec_point = EC_KEY_get0_public_key(key_);
     res = EC_POINT_add(ec_group.get(), child_key_point.get(), ec_point, child_key_point.get(), ctx.get());
+    ERROR_IF(res <= 0, "Crypto Error (PrivateKey::InitializeFromNumericKey): point addition failed");
 
     EC_KEY_ptr public_key(EC_KEY_new(), EC_KEY_free);
     ERROR_IF_NULL(public_key, "Crypto Error (PublicKey::InitializeFromNumericKey): Cound not create public_key");
