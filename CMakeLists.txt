@@ -24,10 +24,26 @@ LIST(APPEND CMAKE_MODULE_PATH "${PDO_SOURCE_ROOT}/contracts/wawaka")
 INCLUDE(contract-build)
 INCLUDE(wawaka_common)
 
-# This switch is not necessary in general. However, it is
-# extremely helpful for reducing the size of large contracts
-LIST(APPEND WASM_LINK_OPTIONS "-Wl,--strip-all")
+# These switches are not necessary in general, but help to
+# optimize memory use for expectations
+LIST(APPEND WASM_LINK_OPTIONS "-Wl,--no-entry,--strip-all")
 
+# Uncomment the following to set stack and memory sizes, these
+# are strictly speaking not needed as the runtime will manage
+# maximum sizes. However, they can be useful to trap unbounded
+# memory usage at compile time rather than at runtime.
+
+# MATH(EXPR CONTRACT_STACK "1*1024*1024")
+# MATH(EXPR CONTRACT_TOTAL "2*1024*1024")
+# LIST(APPEND WASM_LINK_OPTIONS "-Wl,--max-memory=${CONTRACT_TOTAL}")
+# LIST(APPEND WASM_LINK_OPTIONS "-Wl,--initial-memory=${CONTRACT_TOTAL}")
+# LIST(APPEND WASM_LINK_OPTIONS "-z stack-size=${CONTRACT_STACK}")
+
+# The clang runtime library appears to provide builtins for
+# some of the missing functions such as __multi3 and __ashlti3
+LIST(APPEND WASM_LIBRARIES "libclang_rt.builtins.a")
+
+# Include the contract common libraries
 LIST(APPEND WASM_LIBRARIES ${WW_COMMON_LIB})
 LIST(APPEND WASM_INCLUDES ${WW_COMMON_INCLUDES})
 
