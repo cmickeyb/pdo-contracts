@@ -16,15 +16,7 @@
 #pragma once
 
 #include "Types.h"
-
-extern "C" {
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
-#include <openssl/ec.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-}
+#include "identity/crypto/CryptoInternal.h"
 
 #include <memory>
 
@@ -34,21 +26,6 @@ namespace pdo_contracts
 {
 namespace crypto
 {
-    // Typedefs for memory management
-    typedef std::unique_ptr<BIGNUM, void (*)(BIGNUM*)> BIGNUM_ptr;
-    typedef std::unique_ptr<BIO, void (*)(BIO*)> BIO_ptr;
-    typedef std::unique_ptr<BN_CTX, void (*)(BN_CTX*)> BN_CTX_ptr;
-    typedef std::unique_ptr<ECDSA_SIG, void (*)(ECDSA_SIG*)> ECDSA_SIG_ptr;
-    typedef std::unique_ptr<EC_GROUP, void (*)(EC_GROUP*)> EC_GROUP_ptr;
-    typedef std::unique_ptr<EC_KEY, void (*)(EC_KEY*)> EC_KEY_ptr;
-    typedef std::unique_ptr<EC_POINT, void (*)(EC_POINT*)> EC_POINT_ptr;
-    typedef std::unique_ptr<EVP_CIPHER_CTX, void (*)(EVP_CIPHER_CTX*)> CTX_ptr;
-    typedef std::unique_ptr<EVP_MD_CTX, void (*)(EVP_MD_CTX*)> EVP_MD_CTX_ptr;
-    typedef std::unique_ptr<EVP_PKEY_CTX, void (*)(EVP_PKEY_CTX*)> EVP_PKEY_CTX_ptr;
-    typedef std::unique_ptr<HMAC_CTX, void (*)(HMAC_CTX*)> HMAC_CTX_ptr;
-
-    typedef std::unique_ptr<EVP_MAC_CTX, void (*)(EVP_MAC_CTX*)> EVP_MAC_CTX_ptr;
-
     const unsigned int PBDK_Iterations = 10000;
 
     bool SHA256Hash(

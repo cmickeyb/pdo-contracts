@@ -16,10 +16,9 @@
 #pragma once
 
 #include <string>
-#include <openssl/ec.h>
 
-#include "Cryptography.h"
 #include "Types.h"
+#include "identity/crypto/Crypto.h"
 
 #define CHUNK_HMAC_FUNCTION pdo_contracts::crypto::SHA384HMAC
 #define EXTENDED_CHUNK_SIZE 24
@@ -34,8 +33,8 @@ namespace crypto
         class Key
         {
         protected:
-            EC_KEY* key_;
-            int curve_;
+            EC_KEY* key_ = NULL;
+            int curve_ = DEFAULT_CURVE_NID;
 
             static bool DeriveChildKey(
                 const ww::types::ByteArray& extended_chain_code, // array of random bytes, EXTENDED_KEY_SIZE

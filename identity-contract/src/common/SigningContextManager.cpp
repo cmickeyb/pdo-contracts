@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "Cryptography.h"
 #include "KeyValue.h"
 #include "Types.h"
 #include "Value.h"

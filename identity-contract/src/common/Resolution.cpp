@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "Cryptography.h"
 #include "Types.h"
 #include "Value.h"
 

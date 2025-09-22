@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
 
 #include "Types.h"
 #include "WasmExtensions.h"
