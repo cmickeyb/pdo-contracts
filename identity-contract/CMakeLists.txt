@@ -19,7 +19,7 @@ INCLUDE(methods.cmake)
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 SET(OPENSSL_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
-SET(OPENSSL_VERSION 3.1.0)
+SET(OPENSSL_VERSION 3.1.8)
 
 SET(OPENSSL_WASM_INCLUDE_DIR ${OPENSSL_BUILD_DIR}/precompiled/include)
 SET(OPENSSL_WASM_LIB_DIR ${OPENSSL_BUILD_DIR}/precompiled/lib)
@@ -54,6 +54,12 @@ TARGET_INCLUDE_DIRECTORIES(${${CF_HANDLE}_LIB} PUBLIC ${WASM_INCLUDES})
 TARGET_INCLUDE_DIRECTORIES(${${CF_HANDLE}_LIB} PUBLIC ${OPENSSL_WASM_INCLUDE_DIR})
 
 ADD_DEPENDENCIES(${${CF_HANDLE}_LIB} openssl_wasm)
+
+# TIDY command is used to generate "lint" messages during the
+# build. Adjust the parameters to your liking.
+# SET(CLANG_TIDY_COMMAND "/opt/wasi-sdk/bin/clang-tidy" "-checks=-*,modernize-*")
+SET(CLANG_TIDY_COMMAND "/opt/wasi-sdk/bin/clang-tidy")
+SET_TARGET_PROPERTIES(${${CF_HANDLE}_LIB} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
 
 # -----------------------------------------------------------------
 FOREACH(contract ${CF_CONTRACTS})
